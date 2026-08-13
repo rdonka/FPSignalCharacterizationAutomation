@@ -1,0 +1,558 @@
+---
+title: "Fiber Photometry Signal Characterization Automation"
+author: "Rachel M. Donka"
+date: today
+format: 
+  html:
+    theme: flatly
+    toc: true
+    code-fold: true
+    fig-width: 8
+    fig-height: 6
+execute:
+  warning: false
+  message: false
+---
+
+# Introduction
+
+Fiber photometry is a commonly used technique to record in vivo neural activity and neurotransmitter dynamics. Fiber photometry requires the expression of a fluorescent sensor and the implantation of a fiber optic cannula through which changes in fluorescence can be measured in real time. Surgical success rates vary and the classification of subjects with real biological signal is critical to maintaining the quality of collected data sets, which is critical for robust, replicable, and interpretable scientific findings. The goal of this analysis was to enable automatic classification of individual subject fiber photometry recordings and identify subjects with biological signal versus those lacking biological signal. To do so, I applied an elastic net logistic regression model to establish a robust classification threshold for predicting the presence of a true signal based on extracted features.
+
+## Methods
+
+All subjects in this data set were prepared for other experimental protocols. Recordings were conducted prior to the start of experimental protocols.
+
+### Surgical Preparation
+
+Subjects were prepared for fiber photometry experiments with injection of viral vectors to express one of three fluorescent constructs: GCaMP6f in ventral tegmental area (VTA) dopamine (DA) cell bodies (TH:CRE rat line), dLight1.3b in the nucleus accumbens (NAc; lateral shell or core), or GRABDA2H in the NAc (lateral shell or core). Subjects were monitored postoperatively for a minimum of 10 days.
+
+### Fiber Photometry Recordings
+
+Fiber photometry recordings were conducted a minimum of three weeks post-surgery to allow for stabilization of sensor expression. Recordings were conducted in standard operant conditioning chambers (house light and fan on) with RZ5 or RZ10 processors and the software Synapse (Tucker Davis Technologies). Sensor-dependent signal was measured via a 465 nm LED, while a control stream was recorded via a 405 nm LED. A minimum of 5 minutes of recording was collected for each subject.
+
+### Signal Classification
+
+Fiber photometry recordings were hand scored as having 'Signal' or 'No Signal' based on the experimenter's prior experience. Recordings were also assigned a quality score from 0 to 4, with 0 meaning no signal, 1 meaning low quality signal that should be classified as no signal, 2 meaning moderate signal of sufficient quality to be scored as having signal, and 3 meaning high quality signal.
+
+Each recording was scored two times independently, and discrepancies were reconciled based on the signal quality ratings assigned in both scores.
+
+### Signal Processing
+
+Fiber photometry data were extracted and processed in MATLAB (2026a) as in Donka et al, 2025. Briefly, raw data streams were extracted. The background stream (405nm) was scaled to the signal stream (465nm) based on a constant factor derived from the ratio of the power within a high frequency band optimized by sensor (e.g., 10 to 100 Hz). The subtracted data stream was produced by subtracting the scaled background from the raw signal to control for photobleaching and motion artifact effects. The final filtered data stream was produced by applying a band pass Butterworth filter (High pass: 0.0051 Hz; Low pass: 5 Hz) to the subtracted data stream.
+
+### Feature Quantification
+
+For feature quantification, fiber photometry streams were divided into halves (2.5 minutes each), and variables were quantified for each 30 second bin within the separated recordings. Averages across bins were calculated to provide one estimate for each recording.
+
+Fiber photometry recordings were quantified by a variety of parameters including stream range, root mean squared (RMS), mean, and power spectrum magnitude (low, medium, and high frequency bands). Quantification was performed for raw signal, raw background, scaled background, subtracted signal, and subtracted and filtered streams. Additionally, ratios between values in subtracted and scaled background streams were included across variables.
+
+Quantified variables were exported to a .csv file and all further analysis was conducted in R.
+
+``` r
+``{r}
+#| label: data-prep
+
+# Load libraries
+library(caTools)
+library(randomForest)
+library(glmnet)
+library(pdp)
+library(caret)
+library(pROC)
+library(tidyr)
+library(rsample)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(forcats)
+library(emmeans)
+
+# Define paths
+rootgithubpath <- c('C:/Users/rmdon/Desktop/GitHub_MyRepositories/') 
+rootboxpath <- c('C:/Users/rmdon/Box/') 
+
+# Note: Ensure the working directory is accessible when rendering
+setwd(paste(rootboxpath, 'Roitman Data Repository/Projects/2026_FPSignalCharacterizationAutomation_RD/Analysis/',sep=''))
+
+source.all(paste(rootgithubpath,'FPSignalCharacterizationAutomation/Functions/',sep=''))
+
+## Read in data and prep variables -----
+subjectvariables <- read_csv('FPSignalCharacterizationAutomation_ExperimentalVariables.csv')
+data_raw <- read_csv('FPSignalCharacterizationAutomation_AllQuantificationVariables.csv')
+
+# Merge subject variables with data
+data <- left_join(data_raw, subjectvariables, by = "SubjectID")  %>% filter(Sensor != 'GRABDA3M')
+
+set.seed(123)
+
+# Create subject-level summary for stratification
+subject_summary <- data %>%
+  group_by(SubjectID, Sensor) %>%
+  summarise(
+    Signal = first(Signal_RDScored),
+    .groups = "drop"
+  )
+
+# Stratified sample of Subjects
+train_subjects <- subject_summary %>%
+  group_by(Sensor, Signal) %>%
+  sample_frac(0.5) %>%
+  pull(SubjectID)
+
+# Assign Set based on SubjectID
+data_split <- data %>%
+  mutate(Set = ifelse(SubjectID %in% train_subjects, "Train", "Test"))
+
+# Pivot data to wide
+data_wide <- data_split %>%
+  pivot_wider(
+    id_cols = c(SubjectID, Split, Set, Sex, FiberPlacement, Sensor, Rig, Power, Signal_RDScored, Signal_RDQuality, baqscalingfactor),
+    names_from = Variable,
+    values_from = c(sig, baq, baqscaled, sigsub, sigfilt, sigtobaq, sigtobaqscaled)
+  )
+
+# Factor categorical variables
+data_wide$Split <- factor(data_wide$Split)
+data_wide$Sex <- factor(data_wide$Sex)
+data_wide$FiberPlacement <- factor(data_wide$FiberPlacement, levels=c('VTA','NAcLS'))
+data_wide$Sensor <- factor(data_wide$Sensor, levels=c('GCaMP6f','GRABDA2H','dLight1.3b'))
+data_wide$Rig <- factor(data_wide$Rig)
+data_wide$Signal <- factor(data_wide$Signal_RDScored, levels=c('N','Y'))
+data_wide$SignalQuality <- factor(data_wide$Signal_RDQuality)
+
+
+# Scale ratios
+data_wide$sigtobaqscaled_mean_bins_scaled <- data_wide$sigtobaqscaled_mean_bins-1
+data_wide$sigtobaq_MagSum_Band1_scaled <- data_wide$sigtobaq_MagSum_Band1-1
+data_wide$sigtobaq_MagSum_Band2_scaled <- data_wide$sigtobaq_MagSum_Band2-1
+data_wide$sigtobaq_MagSum_Band3_scaled <- data_wide$sigtobaq_MagSum_Band3-1
+data_wide$sigtobaqscaled_MagSum_Band1_scaled <- data_wide$sigtobaqscaled_MagSum_Band1-1
+data_wide$sigtobaqscaled_MagSum_Band2_scaled <- data_wide$sigtobaqscaled_MagSum_Band2-1
+data_wide$sigtobaqscaled_MagSum_Band3_scaled <- data_wide$sigtobaqscaled_MagSum_Band3-1
+
+## Analysis Variables -----
+IDvariables <- c('SubjectID','Sensor','Set','Split','Signal','SignalQuality')
+
+includevariables <- c('sig_range_bins', 'sig_rms_bins', 'sig_MagSum_Band1', 'sig_MagSum_Band2','sig_MagSum_Band3',
+                      'baq_range_bins', 'baq_rms_bins', 'baq_MagSum_Band1', 'baq_MagSum_Band2','baq_MagSum_Band3',
+                      'baqscaled_range_bins', 'baqscaled_rms_bins', 'baqscaled_MagSum_Band1', 'baqscaled_MagSum_Band2','baqscaled_MagSum_Band3',
+                      'sigsub_range_bins', 'sigsub_rms_bins', 'sigsub_MagSum_Band1', 'sigsub_MagSum_Band2','sigsub_MagSum_Band3',
+                      'sigfilt_range_bins', 'sigfilt_rms_bins', 'sigfilt_MagSum_Band1',
+                      'sigtobaq_mean_bins', 'sigtobaq_MagSum_Band1', 'sigtobaq_MagSum_Band2', 'sigtobaq_MagSum_Band3',
+                      'sigtobaqscaled_mean_bins_scaled', 'sigtobaq_MagSum_Band1_scaled', 'sigtobaq_MagSum_Band2_scaled', 'sigtobaq_MagSum_Band3_scaled',
+                      'sigtobaqscaled_MagSum_Band1_scaled', 'sigtobaqscaled_MagSum_Band2_scaled', 'sigtobaqscaled_MagSum_Band3_scaled')
+
+
+modeldata <- data_wide %>% select(all_of(IDvariables), all_of(includevariables))
+```
+
+# Results
+
+## Descriptive Statistics
+
+First, to observe general trends among recordings scored as 'Signal' and 'No Signal', descriptive statistics were quantified for critical variables used in the model.
+
+``` r
+## Prepare means
+### Overall signal means
+modeldata_signalmeans <- modeldata %>%
+  group_by(Signal) %>% 
+  summarize(
+    n_count = n(),
+    across(all_of(includevariables), list(
+      mean = ~mean(.x, na.rm = TRUE),
+      sd   = ~sd(.x, na.rm = TRUE),
+      se   = ~sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))))),
+    .groups = "drop"
+  )
+
+modeldata_signalmeans   
+
+### Overall signal means by sensor
+modeldata_sensorsignalmeans <- modeldata %>%
+  group_by(Sensor, Signal) %>% 
+  summarize(
+    n_count = n(),
+    across(all_of(includevariables), list(
+      mean = ~mean(.x, na.rm = TRUE),
+      sd   = ~sd(.x, na.rm = TRUE),
+      se   = ~sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))))),
+    .groups = "drop" 
+  )
+
+modeldata_sensorsignalmeans   
+
+### Signal Quality means
+modeldata_signalqualitymeans <- modeldata %>%
+  group_by(Signal, SignalQuality) %>% 
+  summarize(
+    n_count = n(),
+    across(all_of(includevariables), list(
+      mean = ~mean(.x, na.rm = TRUE),
+      sd   = ~sd(.x, na.rm = TRUE),
+      se   = ~sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))))),
+    .groups = "drop"
+  )
+
+modeldata_signalqualitymeans   
+
+### Signal Quality means by sensor
+modeldata_sensorsignalqualitymeans <- modeldata %>%
+  group_by(Sensor, Signal, SignalQuality) %>% 
+  summarize(
+    n_count = n(),
+    across(all_of(includevariables), list(
+      mean = ~mean(.x, na.rm = TRUE),
+      sd   = ~sd(.x, na.rm = TRUE),
+      se   = ~sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))))),
+    .groups = "drop"
+  )
+
+modeldata_sensorsignalqualitymeans
+
+
+## Plots
+## Signal Range
+dv_sig_range_bins <- 'sig_range_bins'
+iv_sig_range_bins <- 'Signal'
+
+ymin_sig_range_bins <- 0
+ymax_sig_range_bins <- 170
+yticks_sig_range_bins <- 40
+ybreaks_sig_range_bins <- seq(ymin_sig_range_bins,ymax_sig_range_bins,yticks_sig_range_bins)
+
+xbreaklabels_sig_range_bins <- c('N','Y')
+
+ylabel_sig_range_bins <- 'Raw Signal Range'
+xlabel_sig_range_bins <- 'Signal (Y/N)'
+
+plottitle_sig_range_bins <- 'Mean Raw Signal Stream Range'
+plotsubtitle_sig_range_bins <- 'Raw signal range is greater in rats with signal.'
+
+signalbar_sig_range_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sig_range_bins, iv_sig_range_bins, 
+                                                        ymin_sig_range_bins, ymax_sig_range_bins, ybreaks_sig_range_bins, 
+                                                        xbreaklabels_sig_range_bins, ylabel_sig_range_bins, xlabel_sig_range_bins, 
+                                                        plottitle_sig_range_bins, plotsubtitle_sig_range_bins)
+
+signalbar_sig_range_bins
+
+
+## Signal RMS
+dv_sig_rms_bins <- 'sig_rms_bins'
+iv_sig_rms_bins <- 'Signal'
+
+ymin_sig_rms_bins <- 0
+ymax_sig_rms_bins <- 1000
+yticks_sig_rms_bins <- 250
+ybreaks_sig_rms_bins <- seq(ymin_sig_rms_bins,ymax_sig_rms_bins,yticks_sig_rms_bins)
+
+xbreaklabels_sig_rms_bins <- c('N','Y')
+
+ylabel_sig_rms_bins <- 'Raw Signal RMS'
+xlabel_sig_rms_bins <- 'Signal (Y/N)'
+
+plottitle_sig_rms_bins <- 'Mean Raw Signal Stream Root Mean Squared'
+plotsubtitle_sig_rms_bins <- 'Raw signal RMS is greater in rats with signal.'
+
+signalbar_sig_rms_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sig_rms_bins, iv_sig_rms_bins, 
+                                                      ymin_sig_rms_bins, ymax_sig_rms_bins, ybreaks_sig_rms_bins, 
+                                                      xbreaklabels_sig_rms_bins, ylabel_sig_rms_bins, xlabel_sig_rms_bins, 
+                                                      plottitle_sig_rms_bins, plotsubtitle_sig_rms_bins)
+
+signalbar_sig_rms_bins
+
+
+
+## Scaled Background Range
+dv_baqscaled_range_bins <- 'baqscaled_range_bins'
+iv_baqscaled_range_bins <- 'Signal'
+
+ymin_baqscaled_range_bins <- 0
+ymax_baqscaled_range_bins <- 150
+yticks_baqscaled_range_bins <- 30
+ybreaks_baqscaled_range_bins <- seq(ymin_baqscaled_range_bins,ymax_baqscaled_range_bins,yticks_baqscaled_range_bins)
+
+xbreaklabels_baqscaled_range_bins <- c('N','Y')
+
+ylabel_baqscaled_range_bins <- 'Scaled Background Range'
+xlabel_baqscaled_range_bins <- 'Signal (Y/N)'
+
+plottitle_baqscaled_range_bins <- 'Mean Scaled Background Range'
+plotsubtitle_baqscaled_range_bins <- 'Scaled background range is greater in rats with signal.'
+
+signalbar_baqscaled_range_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_baqscaled_range_bins, iv_baqscaled_range_bins, 
+                                                              ymin_baqscaled_range_bins, ymax_baqscaled_range_bins, ybreaks_baqscaled_range_bins, 
+                                                              xbreaklabels_baqscaled_range_bins, ylabel_baqscaled_range_bins, xlabel_baqscaled_range_bins, 
+                                                              plottitle_baqscaled_range_bins, plotsubtitle_baqscaled_range_bins)
+
+signalbar_baqscaled_range_bins
+
+
+## Scaled Background RMS
+dv_baqscaled_rms_bins <- 'baqscaled_rms_bins'
+iv_baqscaled_rms_bins <- 'Signal'
+
+ymin_baqscaled_rms_bins <- 0
+ymax_baqscaled_rms_bins <- 1000
+yticks_baqscaled_rms_bins <- 250
+ybreaks_baqscaled_rms_bins <- seq(ymin_baqscaled_rms_bins,ymax_baqscaled_rms_bins,yticks_baqscaled_rms_bins)
+
+xbreaklabels_baqscaled_rms_bins <- c('N','Y')
+
+ylabel_baqscaled_rms_bins <- 'Scaled Background RMS'
+xlabel_baqscaled_rms_bins <- 'Signal (Y/N)'
+
+plottitle_baqscaled_rms_bins <- 'Mean Scaled Background Stream Root Mean Squared'
+plotsubtitle_baqscaled_rms_bins <- 'Scaled background RMS is greater in rats with signal.'
+
+signalbar_baqscaled_rms_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_baqscaled_rms_bins, iv_baqscaled_rms_bins, 
+                                                            ymin_baqscaled_rms_bins, ymax_baqscaled_rms_bins, ybreaks_baqscaled_rms_bins, 
+                                                            xbreaklabels_baqscaled_rms_bins, ylabel_baqscaled_rms_bins, xlabel_baqscaled_rms_bins, 
+                                                            plottitle_baqscaled_rms_bins, plotsubtitle_baqscaled_rms_bins)
+
+signalbar_baqscaled_rms_bins
+
+
+## Subtracted Signal RMS
+dv_sigsub_rms_bins <- 'sigsub_rms_bins'
+iv_sigsub_rms_bins <- 'Signal'
+
+ymin_sigsub_rms_bins <- 0
+ymax_sigsub_rms_bins <- 21
+yticks_sigsub_rms_bins <- 5
+ybreaks_sigsub_rms_bins <- seq(ymin_sigsub_rms_bins,ymax_sigsub_rms_bins,yticks_sigsub_rms_bins)
+
+xbreaklabels_sigsub_rms_bins <- c('N','Y')
+
+ylabel_sigsub_rms_bins <- 'Subtracted Signal RMS'
+xlabel_sigsub_rms_bins <- 'Signal (Y/N)'
+
+plottitle_sigsub_rms_bins <- 'Mean Subtracted Signal Stream Root Mean Squared'
+plotsubtitle_sigsub_rms_bins <- 'Subtracted signal RMS is greater in rats with signal.'
+
+signalbar_sigsub_rms_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigsub_rms_bins, iv_sigsub_rms_bins, 
+                                                         ymin_sigsub_rms_bins, ymax_sigsub_rms_bins, ybreaks_sigsub_rms_bins, 
+                                                         xbreaklabels_sigsub_rms_bins, ylabel_sigsub_rms_bins, xlabel_sigsub_rms_bins, 
+                                                         plottitle_sigsub_rms_bins, plotsubtitle_sigsub_rms_bins)
+
+signalbar_sigsub_rms_bins
+
+## Subtracted Signal Range
+dv_sigsub_range_bins <- 'sigsub_range_bins'
+iv_sigsub_range_bins <- 'Signal'
+
+ymin_sigsub_range_bins <- 0
+ymax_sigsub_range_bins <- 110
+yticks_sigsub_range_bins <- 25
+ybreaks_sigsub_range_bins <- seq(ymin_sigsub_range_bins,ymax_sigsub_range_bins,yticks_sigsub_range_bins)
+
+xbreaklabels_sigsub_range_bins <- c('N','Y')
+
+ylabel_sigsub_range_bins <- 'Subtracted Signal Range'
+xlabel_sigsub_range_bins <- 'Signal (Y/N)'
+
+plottitle_sigsub_range_bins <- 'Mean Subtracted Signal Stream Range'
+plotsubtitle_sigsub_range_bins <- 'Subtracted signal range is greater in rats with signal.'
+
+signalbar_sigsub_range_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigsub_range_bins, iv_sigsub_range_bins, 
+                                                           ymin_sigsub_range_bins, ymax_sigsub_range_bins, ybreaks_sigsub_range_bins, 
+                                                           xbreaklabels_sigsub_range_bins, ylabel_sigsub_range_bins, xlabel_sigsub_range_bins, 
+                                                           plottitle_sigsub_range_bins, plotsubtitle_sigsub_range_bins)
+
+signalbar_sigsub_range_bins
+
+
+
+## Subtracted Signal Magnitude - Band 1
+dv_sigsub_MagSum_Band1_bins <- 'sigsub_MagSum_Band1'
+iv_sigsub_MagSum_Band1_bins <- 'Signal'
+
+ymin_sigsub_MagSum_Band1_bins <- 0
+ymax_sigsub_MagSum_Band1_bins <- 530
+yticks_sigsub_MagSum_Band1_bins <- 125
+ybreaks_sigsub_MagSum_Band1_bins <- seq(ymin_sigsub_MagSum_Band1_bins,ymax_sigsub_MagSum_Band1_bins,yticks_sigsub_MagSum_Band1_bins)
+
+xbreaklabels_sigsub_MagSum_Band1_bins <- c('N','Y')
+
+ylabel_sigsub_MagSum_Band1_bins <- 'Total Magnitude (0.0051 to 2.5 Hz)'
+xlabel_sigsub_MagSum_Band1_bins <- 'Signal (Y/N)'
+
+plottitle_sigsub_MagSum_Band1_bins <- 'Mean Subtracted Signal Stream Magnitude - 0.0051 to 2.5 Hz'
+plotsubtitle_sigsub_MagSum_Band1_bins <- 'Subtracted signal magnitude in the low frequency band is greater in rats with signal.'
+
+signalbar_sigsub_MagSum_Band1_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigsub_MagSum_Band1_bins, iv_sigsub_MagSum_Band1_bins, 
+                                                                  ymin_sigsub_MagSum_Band1_bins, ymax_sigsub_MagSum_Band1_bins, ybreaks_sigsub_MagSum_Band1_bins, 
+                                                                  xbreaklabels_sigsub_MagSum_Band1_bins, ylabel_sigsub_MagSum_Band1_bins, xlabel_sigsub_MagSum_Band1_bins, 
+                                                                  plottitle_sigsub_MagSum_Band1_bins, plotsubtitle_sigsub_MagSum_Band1_bins)
+
+signalbar_sigsub_MagSum_Band1_bins
+
+## Subtracted Signal Magnitude - Band 2
+dv_sigsub_MagSum_Band2_bins <- 'sigsub_MagSum_Band2'
+iv_sigsub_MagSum_Band2_bins <- 'Signal'
+
+ymin_sigsub_MagSum_Band2_bins <- 0
+ymax_sigsub_MagSum_Band2_bins <- 175
+yticks_sigsub_MagSum_Band2_bins <- 40
+ybreaks_sigsub_MagSum_Band2_bins <- seq(ymin_sigsub_MagSum_Band2_bins,ymax_sigsub_MagSum_Band2_bins,yticks_sigsub_MagSum_Band2_bins)
+
+xbreaklabels_sigsub_MagSum_Band2_bins <- c('N','Y')
+
+ylabel_sigsub_MagSum_Band2_bins <- 'Total Magnitude (2.5 to 10 Hz)'
+xlabel_sigsub_MagSum_Band2_bins <- 'Signal (Y/N)'
+
+plottitle_sigsub_MagSum_Band2_bins <- 'Mean Subtracted Signal Stream Magnitude - 2.5 to 10 Hz'
+plotsubtitle_sigsub_MagSum_Band2_bins <- 'Subtracted signal magnitude in the medium frequency band is greater in rats with signal.'
+
+signalbar_sigsub_MagSum_Band2_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigsub_MagSum_Band2_bins, iv_sigsub_MagSum_Band2_bins, 
+                                                                  ymin_sigsub_MagSum_Band2_bins, ymax_sigsub_MagSum_Band2_bins, ybreaks_sigsub_MagSum_Band2_bins, 
+                                                                  xbreaklabels_sigsub_MagSum_Band2_bins, ylabel_sigsub_MagSum_Band2_bins, xlabel_sigsub_MagSum_Band2_bins, 
+                                                                  plottitle_sigsub_MagSum_Band2_bins, plotsubtitle_sigsub_MagSum_Band2_bins)
+
+signalbar_sigsub_MagSum_Band2_bins
+
+
+
+## Subtracted Signal Magnitude - Band 3
+dv_sigsub_MagSum_Band3_bins <- 'sigsub_MagSum_Band3'
+iv_sigsub_MagSum_Band3_bins <- 'Signal'
+
+ymin_sigsub_MagSum_Band3_bins <- 0
+ymax_sigsub_MagSum_Band3_bins <- 80
+yticks_sigsub_MagSum_Band3_bins <- 20
+ybreaks_sigsub_MagSum_Band3_bins <- seq(ymin_sigsub_MagSum_Band3_bins,ymax_sigsub_MagSum_Band3_bins,yticks_sigsub_MagSum_Band3_bins)
+
+xbreaklabels_sigsub_MagSum_Band3_bins <- c('N','Y')
+
+ylabel_sigsub_MagSum_Band3_bins <- 'Total Magnitude (10 to 100 Hz)'
+xlabel_sigsub_MagSum_Band3_bins <- 'Signal (Y/N)'
+
+plottitle_sigsub_MagSum_Band3_bins <- 'Mean Subtracted Signal Stream Magnitude - 10 to 100 Hz'
+plotsubtitle_sigsub_MagSum_Band3_bins <- 'Subtracted signal magnitude in the high frequency band is greater in rats with signal.'
+
+signalbar_sigsub_MagSum_Band3_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigsub_MagSum_Band3_bins, iv_sigsub_MagSum_Band3_bins, 
+                                                                  ymin_sigsub_MagSum_Band3_bins, ymax_sigsub_MagSum_Band3_bins, ybreaks_sigsub_MagSum_Band3_bins, 
+                                                                  xbreaklabels_sigsub_MagSum_Band3_bins, ylabel_sigsub_MagSum_Band3_bins, xlabel_sigsub_MagSum_Band3_bins, 
+                                                                  plottitle_sigsub_MagSum_Band3_bins, plotsubtitle_sigsub_MagSum_Band3_bins)
+
+signalbar_sigsub_MagSum_Band3_bins
+
+
+## Raw signal to scaled background mean
+dv_sigtobaqscaled_mean_bins_scaled <- 'sigtobaqscaled_mean_bins_scaled'
+iv_sigtobaqscaled_mean_bins_scaled <- 'Signal'
+
+ymin_sigtobaqscaled_mean_bins_scaled <- -.08
+ymax_sigtobaqscaled_mean_bins_scaled <- .08
+yticks_sigtobaqscaled_mean_bins_scaled <- .04
+ybreaks_sigtobaqscaled_mean_bins_scaled <- seq(ymin_sigtobaqscaled_mean_bins_scaled,ymax_sigtobaqscaled_mean_bins_scaled,yticks_sigtobaqscaled_mean_bins_scaled)
+
+xbreaklabels_sigtobaqscaled_mean_bins_scaled <- c('N','Y')
+
+ylabel_sigtobaqscaled_mean_bins_scaled <- 'Ratio (Mean Signal : Mean Scaled Background)'
+xlabel_sigtobaqscaled_mean_bins_scaled <- 'Signal (Y/N)'
+
+plottitle_sigtobaqscaled_mean_bins_scaled <- 'Ratio of Signal Stream to Scaled Background Stream Mean'
+plotsubtitle_sigtobaqscaled_mean_bins_scaled <- 'Ratio is higher in rats with signal.'
+
+signalbar_sigtobaqscaled_mean_bins_scaled <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigtobaqscaled_mean_bins_scaled, iv_sigtobaqscaled_mean_bins_scaled, 
+                                                                         ymin_sigtobaqscaled_mean_bins_scaled, ymax_sigtobaqscaled_mean_bins_scaled, ybreaks_sigtobaqscaled_mean_bins_scaled, 
+                                                                         xbreaklabels_sigtobaqscaled_mean_bins_scaled, ylabel_sigtobaqscaled_mean_bins_scaled, xlabel_sigtobaqscaled_mean_bins_scaled, 
+                                                                         plottitle_sigtobaqscaled_mean_bins_scaled, plotsubtitle_sigtobaqscaled_mean_bins_scaled)
+
+signalbar_sigtobaqscaled_mean_bins_scaled
+
+
+
+## Signal to Scaled Background Magnitude - Band 1
+dv_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'sigtobaqscaled_MagSum_Band1_scaled'
+iv_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Signal'
+
+ymin_sigtobaqscaled_MagSum_Band1_scaled_bins <- -.16
+ymax_sigtobaqscaled_MagSum_Band1_scaled_bins <- .16
+yticks_sigtobaqscaled_MagSum_Band1_scaled_bins <- .08
+ybreaks_sigtobaqscaled_MagSum_Band1_scaled_bins <- seq(ymin_sigtobaqscaled_MagSum_Band1_scaled_bins,ymax_sigtobaqscaled_MagSum_Band1_scaled_bins,yticks_sigtobaqscaled_MagSum_Band1_scaled_bins)
+
+xbreaklabels_sigtobaqscaled_MagSum_Band1_scaled_bins <- c('N','Y')
+
+ylabel_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Magnitude Ratio (0.0051 to 2.5 Hz)'
+xlabel_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Signal (Y/N)'
+
+plottitle_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Ratio of Signal to Scaled Background Stream Magnitude - 0.0051 to 2.5 Hz'
+plotsubtitle_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Ratio in the low frequency band is higher in rats with signal.'
+
+signalbar_sigtobaqscaled_MagSum_Band1_scaled_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigtobaqscaled_MagSum_Band1_scaled_bins, iv_sigtobaqscaled_MagSum_Band1_scaled_bins, 
+                                                                                 ymin_sigtobaqscaled_MagSum_Band1_scaled_bins, ymax_sigtobaqscaled_MagSum_Band1_scaled_bins, ybreaks_sigtobaqscaled_MagSum_Band1_scaled_bins, 
+                                                                                 xbreaklabels_sigtobaqscaled_MagSum_Band1_scaled_bins, ylabel_sigtobaqscaled_MagSum_Band1_scaled_bins, xlabel_sigtobaqscaled_MagSum_Band1_scaled_bins, 
+                                                                                 plottitle_sigtobaqscaled_MagSum_Band1_scaled_bins, plotsubtitle_sigtobaqscaled_MagSum_Band1_scaled_bins)
+
+signalbar_sigtobaqscaled_MagSum_Band1_scaled_bins
+
+
+
+## Signal to Scaled Background Magnitude - Band 2
+dv_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'sigtobaqscaled_MagSum_Band2_scaled'
+iv_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Signal'
+
+ymin_sigtobaqscaled_MagSum_Band2_scaled_bins <- -.3
+ymax_sigtobaqscaled_MagSum_Band2_scaled_bins <- .3
+yticks_sigtobaqscaled_MagSum_Band2_scaled_bins <- .15
+ybreaks_sigtobaqscaled_MagSum_Band2_scaled_bins <- seq(ymin_sigtobaqscaled_MagSum_Band2_scaled_bins,ymax_sigtobaqscaled_MagSum_Band2_scaled_bins,yticks_sigtobaqscaled_MagSum_Band2_scaled_bins)
+
+xbreaklabels_sigtobaqscaled_MagSum_Band2_scaled_bins <- c('N','Y')
+
+ylabel_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Magnitude Ratio (2.5 to 10 Hz)'
+xlabel_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Signal (Y/N)'
+
+plottitle_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Ratio of Signal to Scaled Background Stream Magnitude - 2.5 to 10 Hz'
+plotsubtitle_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Ratio in the medium frequency band is higher in rats with signal.'
+
+signalbar_sigtobaqscaled_MagSum_Band2_scaled_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigtobaqscaled_MagSum_Band2_scaled_bins, iv_sigtobaqscaled_MagSum_Band2_scaled_bins, 
+                                                                                 ymin_sigtobaqscaled_MagSum_Band2_scaled_bins, ymax_sigtobaqscaled_MagSum_Band2_scaled_bins, ybreaks_sigtobaqscaled_MagSum_Band2_scaled_bins, 
+                                                                                 xbreaklabels_sigtobaqscaled_MagSum_Band2_scaled_bins, ylabel_sigtobaqscaled_MagSum_Band2_scaled_bins, xlabel_sigtobaqscaled_MagSum_Band2_scaled_bins, 
+                                                                                 plottitle_sigtobaqscaled_MagSum_Band2_scaled_bins, plotsubtitle_sigtobaqscaled_MagSum_Band2_scaled_bins)
+
+signalbar_sigtobaqscaled_MagSum_Band2_scaled_bins
+
+
+## Signal to Scaled Background Magnitude - Band 3
+dv_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'sigtobaqscaled_MagSum_Band3_scaled'
+iv_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Signal'
+
+ymin_sigtobaqscaled_MagSum_Band3_scaled_bins <- -.1
+ymax_sigtobaqscaled_MagSum_Band3_scaled_bins <- .36
+yticks_sigtobaqscaled_MagSum_Band3_scaled_bins <- .1
+ybreaks_sigtobaqscaled_MagSum_Band3_scaled_bins <- seq(ymin_sigtobaqscaled_MagSum_Band3_scaled_bins,ymax_sigtobaqscaled_MagSum_Band3_scaled_bins,yticks_sigtobaqscaled_MagSum_Band3_scaled_bins)
+
+xbreaklabels_sigtobaqscaled_MagSum_Band3_scaled_bins <- c('N','Y')
+
+ylabel_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Magnitude Ratio (10 to 100 Hz)'
+xlabel_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Signal (Y/N)'
+
+plottitle_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Ratio of Signal to Scaled Background Stream Magnitude - 10 to 100 Hz'
+plotsubtitle_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Ratio in the high frequency band is higher in rats with signal.'
+
+signalbar_sigtobaqscaled_MagSum_Band3_scaled_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigtobaqscaled_MagSum_Band3_scaled_bins, iv_sigtobaqscaled_MagSum_Band3_scaled_bins, 
+                                                                                 ymin_sigtobaqscaled_MagSum_Band3_scaled_bins, ymax_sigtobaqscaled_MagSum_Band3_scaled_bins, ybreaks_sigtobaqscaled_MagSum_Band3_scaled_bins, 
+                                                                                 xbreaklabels_sigtobaqscaled_MagSum_Band3_scaled_bins, ylabel_sigtobaqscaled_MagSum_Band3_scaled_bins, xlabel_sigtobaqscaled_MagSum_Band3_scaled_bins, 
+                                                                                 plottitle_sigtobaqscaled_MagSum_Band3_scaled_bins, plotsubtitle_sigtobaqscaled_MagSum_Band3_scaled_bins)
+
+signalbar_sigtobaqscaled_MagSum_Band3_scaled_bins
+```
+
+# Model Development: Elastic Net Classification
+
+To classify whether fiber photometry recordings contained a biological signal (Y/N), an Elastic Net logistic regression was trained. Elastic Net applies a combination of Ridge (L2) and Lasso (L1) penalities ($\alpha = 0.5$) to handle correlated predictors while inherently performing feature selection.
+
+The model was trained on the following structure:
+
+**Predictors (Features):** 30 extracted signal metrics, encompassing raw, background-subtracted, and scaled variables across amplitude and frequency domains.
+
+**Target (Outcome):** The binary \`Signal\` variable (Yes / No).
+
+**Validation:** The dataset was partitioned into training and testing sets using a stratified split, ensuring that signal classifications and sensor types (e.g., GCaMP6f, dLight1.3b) were equally balanced across both sets.
+
+To identify the optimal regularization parameter (lambda), the model utilized 10-fold cross-validation on the training set. The final model was evaluated on the test set, converting predicted probabilities into binary classifications using a standard 0.5 decision threshold.
+
+``` r
+```

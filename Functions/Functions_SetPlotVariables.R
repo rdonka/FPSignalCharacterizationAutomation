@@ -1,22 +1,23 @@
 ### Set plot variables
 # Font sizes
-mybasesize <- 9
-mytitlesize <- 9
-myaxislabelsize <- 8
-mystarsize <- 4
-myannotatetextsize <- 2
+mybasesize <- 12
+mytitlesize <- 16
+myaxislabelsize <- 10
+mystarsize <- 6
+myannotatetextsize <- 6
 
 # General plot area
-myaxislinewidth <- 0.4
-mylinewidth <- 1
+myaxislinewidth <- 0.8
 
 # Plot variables
 mylinewidth <- .6
 myreglinewidth <- 1.5
 mycolwidth <- .8
+myskinnycolwidth <- .6
+
 mycollinewidth <- 0.8
-myerrorbarwidth <- .5
-myerrorbarlinewidth <- .28
+myerrorbarwidth <- .6
+myerrorbarlinewidth <- .4
 mypointsize <- 1.2
 mysubjectpointsize <- 1
 mysubjectpointstroke <- .4
@@ -57,6 +58,7 @@ colorlists <- colorkey %>%
 colors_signal <- colorlists$Signal
 colors_signalquality <- colorlists$SignalQuality
 colors_sensor <- colorlists$Sensor
+colors_sensorsignalquality <- colorlists$SensorSignalQuality
 
 
 colors_signal_Y <- colors_signal[[1]]
