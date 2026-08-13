@@ -558,16 +558,6 @@ EN_coef <- coef(EN_finalmodel) %>%
   filter(coefficient != 0 & variable != "(Intercept)")
 
 
-EN_coef_cleaned <- EN_coef %>%
-  mutate(abs_coef = abs(coefficient),
-         Direction = ifelse(coefficient > 0, "Predicts Signal", "Predicts No Signal"),
-         Signal = ifelse(coefficient > 0, "Y", "N")) %>%
-  arrange(desc(abs_coef)) %>%
-  slice(1:30) # Select top predictors
-
-EN_coef_cleaned
-
-
 variable_lookup <- setNames(includevariables_labels, includevariables)
 
 EN_coef_cleaned <- EN_coef %>% filter(variable != "X.Intercept.") %>%

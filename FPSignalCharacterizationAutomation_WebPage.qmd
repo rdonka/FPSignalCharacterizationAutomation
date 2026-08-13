@@ -694,5 +694,12 @@ EN_test_results_summary <- EN_test_results %>%
 
 ## Model Results
 
+Overall, the specified elastic net model successfully characterized fiber photometry recordings into 'Signal' and 'No Signal' categories based on quantified parameters extracted from the data streams. Model accuracy was 89.91%.
+
+Of the 32 variables included in the model, 23 were significant predictors of Signal or No Signal classifications.
+
+``` r
+```
+
 ``` r
 ```
