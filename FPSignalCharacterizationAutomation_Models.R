@@ -502,7 +502,6 @@ ENdata <- modeldata
 ENdata_train <- ENdata %>% filter(Set == "Train") %>% select(-Set, -Split)
 ENdata_test  <- ENdata %>% filter(Set == "Test")%>% select(-Set, -Split)
 
-
 # Create design matrix of predictors (excluding SubjectID)
 EN_x_train <- model.matrix(~ .-Signal -SignalQuality -SubjectID -Sensor, data = ENdata_train)
 EN_y_train <- ENdata_train$Signal
@@ -519,7 +518,7 @@ EN_cv <- cv.glmnet(
   y = EN_y_train,
   family = "binomial",
   alpha = 0.5,             
-  type.measure = "class", # AUC grading metric
+  type.measure = "class",
   nfolds = 10 # 10-fold cross-validation
 )
 
@@ -530,10 +529,10 @@ EN_minlambda <- EN_cv$lambda.min
 EN_finalmodel <- glmnet(EN_x_train, EN_y_train, family = "binomial", alpha = 0.5, lambda = EN_minlambda)
 
 ## Predict test set -----
-# Predict probabilities (for class = 1/"Y")
+# Predict probabilities
 EN_test_probs <- predict(EN_finalmodel, newx = EN_x_test, type = "response")
 
-# Convert to binary predictions using threshold (e.g., 0.5)
+# Convert to binary predictions using threshold of 0.5
 EN_test_preds <- ifelse(EN_test_probs > 0.5, "Y", "N") %>% factor(levels = c("N", "Y"))
 
 # Predict class
@@ -564,7 +563,7 @@ EN_coef_cleaned <- EN_coef %>%
          Direction = ifelse(coefficient > 0, "Predicts Signal", "Predicts No Signal"),
          Signal = ifelse(coefficient > 0, "Y", "N")) %>%
   arrange(desc(abs_coef)) %>%
-  slice(1:30) # Select top 30 predictors
+  slice(1:30) # Select top predictors
 
 EN_coef_cleaned
 
@@ -583,11 +582,9 @@ EN_coef_cleaned <- EN_coef %>% filter(variable != "X.Intercept.") %>%
 # Rank byVariableNames2String()# Rank by absolute value
 EN_toppredictors <- EN_coef %>%
   mutate(abs_coef = abs(coefficient)) %>%
-  arrange(desc(abs_coef)) #%>%
-  #slice(1:20)  # Top 20 predictors
+  arrange(desc(abs_coef))
 
 EN_toppredictors
-
 
 
 ## ADD BACK CATEGORICAL ID VARIABLES -----
@@ -619,7 +616,7 @@ EN_test_results_summary_quality <- EN_test_results %>%
     .groups = "drop"
   )
 
-EN_test_results_summary_quality
+#EN_test_results_summary_quality
 
 EN_test_results_summary <- EN_test_results %>%
   group_by(Sensor, Signal) %>%
@@ -632,7 +629,7 @@ EN_test_results_summary <- EN_test_results %>%
     .groups = "drop"
   )
 
-EN_test_results_summary
+#EN_test_results_summary
 
 ## FIGURE 1: CV error curve
 cv_data <- tibble(

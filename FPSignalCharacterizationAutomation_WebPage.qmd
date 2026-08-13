@@ -540,7 +540,7 @@ signalbar_sigtobaqscaled_MagSum_Band3_scaled_bins <- plotdescriptives_signal_bar
 signalbar_sigtobaqscaled_MagSum_Band3_scaled_bins
 ```
 
-# Model Development: Elastic Net Classification
+## Model Specification: Elastic Net Classification
 
 To classify whether fiber photometry recordings contained a biological signal (Y/N), an Elastic Net logistic regression was trained. Elastic Net applies a combination of Ridge (L2) and Lasso (L1) penalities ($\alpha = 0.5$) to handle correlated predictors while inherently performing feature selection.
 
@@ -550,9 +550,149 @@ The model was trained on the following structure:
 
 **Target (Outcome):** The binary \`Signal\` variable (Yes / No).
 
-**Validation:** The dataset was partitioned into training and testing sets using a stratified split, ensuring that signal classifications and sensor types (e.g., GCaMP6f, dLight1.3b) were equally balanced across both sets.
+**Validation:** The dataset was partitioned into training and testing sets using a stratified split, ensuring that signal classifications and sensor types (e.g., GCaMP6f, dLight1.3b) were equally balanced across both sets. To identify the optimal regularization parameter (lambda), the model utilized 10-fold cross-validation on the training set. The final model was evaluated on the test set, converting predicted probabilities into binary classifications using a standard 0.5 decision threshold.
 
-To identify the optimal regularization parameter (lambda), the model utilized 10-fold cross-validation on the training set. The final model was evaluated on the test set, converting predicted probabilities into binary classifications using a standard 0.5 decision threshold.
+``` r
+# ELASTIC NET - SIGNAL -----
+## Prepare train and test data -----
+# Remove extra columns
+ENdata <- modeldata
+
+# Create training and testing sets
+ENdata_train <- ENdata %>% filter(Set == "Train") %>% select(-Set, -Split)
+ENdata_test  <- ENdata %>% filter(Set == "Test")%>% select(-Set, -Split)
+
+# Create design matrix of predictors (excluding SubjectID)
+EN_x_train <- model.matrix(~ .-Signal -SignalQuality -SubjectID -Sensor, data = ENdata_train)
+EN_y_train <- ENdata_train$Signal
+
+# Prepare test
+EN_x_test <- model.matrix(~ .-Signal -SignalQuality -SubjectID-Sensor, data = ENdata_test)
+EN_y_test <- ENdata_test$Signal
+
+## Fit elastic net -----
+set.seed(123)
+
+EN_cv <- cv.glmnet(
+  x = EN_x_train,
+  y = EN_y_train,
+  family = "binomial",
+  alpha = 0.5,             
+  type.measure = "class",
+  nfolds = 10 # 10-fold cross-validation
+)
+
+# Set lambda 
+EN_minlambda <- EN_cv$lambda.min
+
+# Refit model at this lambda
+EN_finalmodel <- glmnet(EN_x_train, EN_y_train, family = "binomial", alpha = 0.5, lambda = EN_minlambda)
+
+## Predict test set -----
+# Predict probabilities
+EN_test_probs <- predict(EN_finalmodel, newx = EN_x_test, type = "response")
+
+# Convert to binary predictions using threshold of 0.5
+EN_test_preds <- ifelse(EN_test_probs > 0.5, "Y", "N") %>% factor(levels = c("N", "Y"))
+
+# Predict class
+EN_pred_class <- predict(EN_cv, newx = EN_x_test, s = "lambda.min", type = "class")
+
+# Predict probability
+EN_pred_prob <- predict(EN_cv, newx = EN_x_test, s = "lambda.min", type = "response")
+
+# Confusion matrix
+EN_confusion <- table(Predicted = EN_test_preds, Actual = EN_y_test)
+print(EN_confusion)
+
+accuracy <- mean(EN_test_preds == EN_y_test)
+accuracy
+
+
+# Extract coefficients
+EN_coef <- coef(EN_finalmodel) %>%
+  as.matrix() %>%
+  as.data.frame() %>%
+  rownames_to_column("variable") %>%
+  rename(coefficient = `s0`) %>%
+  filter(coefficient != 0 & variable != "(Intercept)")
+
+
+EN_coef_cleaned <- EN_coef %>%
+  mutate(abs_coef = abs(coefficient),
+         Direction = ifelse(coefficient > 0, "Predicts Signal", "Predicts No Signal"),
+         Signal = ifelse(coefficient > 0, "Y", "N")) %>%
+  arrange(desc(abs_coef)) %>%
+  slice(1:30) # Select top predictors
+
+EN_coef_cleaned
+
+
+variable_lookup <- setNames(includevariables_labels, includevariables)
+
+EN_coef_cleaned <- EN_coef %>% filter(variable != "X.Intercept.") %>%
+  mutate(abs_coef = abs(coefficient),
+         Direction = ifelse(coefficient > 0, "Predicts Signal", "Predicts No Signal"),
+         Signal = ifelse(coefficient > 0, "Y", "N")) %>%
+  mutate(variablename = coalesce(variable_lookup[variable], variable)) %>% 
+  arrange(desc(abs_coef)) %>%
+  slice(1:30)
+
+
+# Rank byVariableNames2String()# Rank by absolute value
+EN_toppredictors <- EN_coef %>%
+  mutate(abs_coef = abs(coefficient)) %>%
+  arrange(desc(abs_coef))
+
+EN_toppredictors
+
+
+## ADD BACK CATEGORICAL ID VARIABLES -----
+catvars <- data_wide %>% filter(Split == 1)
+
+EN_data_test_full <- ENdata_test %>%
+  left_join(catvars %>% select(SubjectID, FiberPlacement, Power, Rig),
+            by = c("SubjectID"))
+
+EN_test_results <- EN_data_test_full %>%
+  select(SubjectID, Signal, SignalQuality, Sensor, FiberPlacement, SignalQuality, Power, Rig) %>%
+  mutate(
+    Predicted = EN_test_preds,
+    Prob_Y = as.numeric(EN_test_probs),
+    Correct = (Signal == EN_test_preds)
+  )
+
+EN_test_results$SensorSignalQuality <- paste(EN_test_results$Sensor, EN_test_results$SignalQuality, sep='_')
+
+## SUMMARIZE -----
+EN_test_results_summary_quality <- EN_test_results %>%
+  group_by(Sensor, Signal, SignalQuality, SensorSignalQuality) %>%
+  summarise(
+    Accuracy = mean(Correct),
+    AccuracyPerc = scales::percent(mean(Correct), accuracy = 0.1),
+    n = n(),
+    n_correct = sum(Correct),
+    n_incorrect = n - n_correct,
+    .groups = "drop"
+  )
+
+#EN_test_results_summary_quality
+
+EN_test_results_summary <- EN_test_results %>%
+  group_by(Sensor, Signal) %>%
+  summarise(
+    Accuracy = mean(Correct),
+    AccuracyPerc = scales::percent(mean(Correct), accuracy = 0.1),
+    n = n(),
+    n_correct = sum(Correct),
+    n_incorrect = n - n_correct,
+    .groups = "drop"
+  )
+
+#EN_test_results_summary
+```
+
+## Model Results
 
 ``` r
 ```
