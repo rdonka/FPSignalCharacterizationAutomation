@@ -12,6 +12,7 @@ format:
 execute:
   warning: false
   message: false
+  echo: false
 ---
 
 # Introduction
@@ -51,7 +52,6 @@ Fiber photometry recordings were quantified by a variety of parameters including
 Quantified variables were exported to a .csv file and all further analysis was conducted in R.
 
 ``` r
-``{r}
 #| label: data-prep
 
 # Load libraries
