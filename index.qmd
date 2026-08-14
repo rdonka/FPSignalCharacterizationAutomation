@@ -2,8 +2,6 @@
 title: "Fiber Photometry Signal Characterization Automation"
 author: "Rachel M. Donka"
 date: today
-project:
-  output-dir: docs
 format: 
   html:
     theme: flatly
