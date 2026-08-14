@@ -682,7 +682,7 @@ fig_m1_roc <- ggroc(roc_obj, color = colors_signal_Y, size = 1.2) +
 fig_m1_roc
 
 
-# FIGURE 3: Confusion Matrix Heatmap
+# FIGURE 4: Confusion Matrix Heatmap
 en_cm_tidy <- EN_confusion %>%
   as.data.frame() %>% 
   mutate(Actual = factor(Actual, levels=rev(levels(Actual))),
@@ -701,7 +701,7 @@ fig_m1_confusion_matrix <- en_cm_tidy %>%
 fig_m1_confusion_matrix
 
 
-# FIGURE 4: Probability Density (Calibration Check)
+# FIGURE 5: Probability Density (Calibration Check)
 fig_m1_probability_density <- EN_test_results %>%
   ggplot(aes(x = Prob_Y, fill = Signal)) +
   geom_density(alpha = 1, color=NA) +
@@ -722,13 +722,9 @@ EN_test_results$Correct <- as.integer(EN_test_results$Correct)
 
 logit_model <- glm(Correct ~ factor(SignalQuality), data = EN_test_results, family = "binomial")
 summary(logit_model)
-anova(logit_model)
 
-model_emmeans <- emmeans(logit_model, ~ SignalQuality)
-pairwise_results <- pairs(model_emmeans, adjust = "tukey")
-
-pairwise_results
-
+model_emmeans <- emmeans(logit_model, pairwise~ SignalQuality)
+model_emmeans$contrasts
 
 fig_m1_quality_counts <- EN_test_results %>%
   filter(!is.na(SignalQuality)) %>% 
@@ -792,36 +788,11 @@ print(fig_m1_quality_probs)
 
 ## Sensor comparisons
 sensor_table <- table(EN_test_results$Sensor, EN_test_results$Correct)
-print("Contingency Table (Counts):")
-print(sensor_table)
 
 fisher_result <- fisher.test(sensor_table)
-print("Fisher's Exact Test Result:")
-print(fisher_result)
+fisher_result
 
-
-# FIGURE 8: Sensor Accuracy Count Matrix
-sensor_df <- as.data.frame(sensor_table) # Convert to data frame
-colnames(sensor_df) <- c("Sensor", "Correct", "Count") # Rename columns
-
-
-fig_sensor_accuracytable <- ggplot(sensor_df, aes(x = Correct, y = Sensor, fill = Count)) +
-  geom_tile(color = "white", size = 1) +
-  geom_text(aes(label = Count), color = "black", size = 6) +
-  scale_fill_gradient(low = colors_signal_N, high = colors_signal_Y) +
-  scale_x_discrete(labels = c('Incorrect','Correct')) +
-  labs(title = "Signal Classification Accuracy Count Matrix",
-    x = "Classification",
-    y = "Sensor"
-  ) +
-  mytheme_legend + 
-  theme(
-    panel.grid = element_blank(),
-    legend.position = "right")
-
-fig_sensor_accuracytable
-
-# FIGURE 9: Accuracy Rate by Sensor
+# FIGURE 8: Accuracy Rate by Sensor
 fig_sensor_accuracy <- EN_test_results %>%
   group_by(Sensor) %>%
   summarise(
@@ -844,6 +815,28 @@ fig_sensor_accuracy <- EN_test_results %>%
 fig_sensor_accuracy
 
 
+# FIGURE 9: Sensor Accuracy Count Matrix
+sensor_df <- as.data.frame(sensor_table) # Convert to data frame
+colnames(sensor_df) <- c("Sensor", "Correct", "Count") # Rename columns
+
+
+fig_sensor_accuracytable <- ggplot(sensor_df, aes(x = Correct, y = Sensor, fill = Count)) +
+  geom_tile(color = "white", size = 1) +
+  geom_text(aes(label = Count), color = "black", size = 6) +
+  scale_fill_gradient(low = colors_signal_N, high = colors_signal_Y) +
+  scale_x_discrete(labels = c('Incorrect','Correct')) +
+  labs(title = "Signal Classification Accuracy Count Matrix",
+    x = "Classification",
+    y = "Sensor"
+  ) +
+  mytheme_legend + 
+  theme(
+    panel.grid = element_blank(),
+    legend.position = "right")
+
+fig_sensor_accuracytable
+
+
 # FIGURE 10: Accuracy Rate by Sensor and Signal Quality
 fig_sensor_accuracy_signalquality <- EN_test_results %>%
   group_by(Sensor, SignalQuality, SensorSignalQuality) %>%
@@ -863,8 +856,6 @@ fig_sensor_accuracy_signalquality
 
 
 # FIGURE 11: Model Confidence (Predicted Probability) by Sensor
-# This is crucial: it shows if the model is systematically over- or under-predicting
-# for specific sensors, even if it gets the final binary class "correct".
 
 fig_sensor_probs <- EN_test_results %>%
   ggplot(aes(x = Sensor, y = Prob_Y, fill = Signal)) +
