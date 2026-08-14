@@ -1,8 +1,8 @@
 ### Set plot variables
 # Font sizes
-mybasesize <- 12
-mytitlesize <- 16
-myaxislabelsize <- 10
+mybasesize <- 9
+mytitlesize <- 10
+myaxislabelsize <- 9
 mystarsize <- 6
 myannotatetextsize <- 6
 
