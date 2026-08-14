@@ -8,7 +8,7 @@ format:
     toc: true
     code-fold: true
     fig-width: 10
-    fig-height: 5
+    fig-height: 4
 execute:
   warning: false
   message: false
@@ -505,25 +505,33 @@ signalbar_sigtobaqscaled_MagSum_Band3_scaled_bins <- plotdescriptives_signal_bar
 
 plot_grid(signalbar_sig_rms_bins,
           signalbar_sig_range_bins,
-          signalbar_baqscaled_rms_bins,
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('A','B'))
+
+plot_grid(signalbar_baqscaled_rms_bins,
           signalbar_baqscaled_range_bins,
-          ncol = 2, nrow=2, align = "hv",
-          axis  = "tblr", hjust=-.5, labels = c('A','B','C','D'))
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('C','D'))
 
 plot_grid(signalbar_sigsub_rms_bins,
           signalbar_sigsub_range_bins,
-          signalbar_sigsub_MagSum_Band1_bins,
-          signalbar_sigsub_MagSum_Band2_bins,
-          ncol = 2, nrow=2, align = "hv",
-          axis  = "tblr", hjust=-.5, labels = c('E','F','G','H'))
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('E','F'))
 
+plot_grid(signalbar_sigsub_MagSum_Band1_bins,
+          signalbar_sigsub_MagSum_Band2_bins,
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('G','H'))
 
 plot_grid(signalbar_sigsub_MagSum_Band3_bins,
           signalbar_sigtobaqscaled_MagSum_Band1_scaled_bins,
-          signalbar_sigtobaqscaled_MagSum_Band2_scaled_bins,
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('I','J'))
+
+plot_grid(signalbar_sigtobaqscaled_MagSum_Band2_scaled_bins,
           signalbar_sigtobaqscaled_MagSum_Band3_scaled_bins,
-          ncol = 2, nrow=2, align = "hv",
-          axis  = "tblr", hjust=-.5, labels = c('I','J','K','L'))
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('K','L'))
 
 ```
 
