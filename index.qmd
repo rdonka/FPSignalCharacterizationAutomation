@@ -212,18 +212,15 @@ modeldata <- data_wide %>% select(all_of(IDvariables), all_of(includevariables))
 
 ## Representative Traces of Classified Recordings and Quality Ratings
 
+::: {layout-ncol=2}
+![No Signal - Quality = 0](Example Traces/SignalN_Quality0_dLight.png){width=40% fig-align="center"}
 
-**Representative Trace: No Signal, Quality = 0**
-![Representative Trace: No Signal, Quality 0](C:/Users/rmdon/Desktop/GitHub_MyRepositories/FPSignalCharacterizationAutomation/Example Traces/SignalN_Quality0_dLight.png){width=40% fig-align="center"}
+![No Signal - Quality = 1](Example Traces/SignalN_Quality1_dLight.png){width=40% fig-align="center"}
 
+![Signal - Quality = 2](Example Traces/SignalY_Quality2_dLight.png){width=40% fig-align="center"}
 
-**Representative Trace: No Signal, Quality = 1:**
-![Representative Trace: No Signal, Quality 1](C:/Users/rmdon/Desktop/GitHub_MyRepositories/FPSignalCharacterizationAutomation/Example Traces/SignalN_Quality1_dLight.png){width=40% fig-align="center"}
-**Representative Trace: Signal, Quality = 2:**
-![Representative Trace: Signal, Quality 2](C:/Users/rmdon/Desktop/GitHub_MyRepositories/FPSignalCharacterizationAutomation/Example Traces/SignalY_Quality2_dLight.png){width=40% fig-align="center"}
-
-**Representative Trace: Signal, Quality = 3:**
-![Representative Trace: Signal, Quality 3](C:/Users/rmdon/Desktop/GitHub_MyRepositories/FPSignalCharacterizationAutomation/Example Traces/SignalY_Quality3_dLight.png){width=40% fig-align="center"}
+![Signal - Quality = 3](Example Traces/SignalY_Quality3_dLight.png){width=40% fig-align="center"}
+:::
 
 ## Descriptive Statistics
 
