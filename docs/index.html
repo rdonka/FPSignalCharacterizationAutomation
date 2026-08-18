@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Rachel M. Donka">
-<meta name="dcterms.date" content="2026-08-14">
+<meta name="dcterms.date" content="2026-08-17">
 
 <title>Fiber Photometry Signal Characterization Automation – Fiber Photometry Dopamine Signal Characterization</title>
 <style>
@@ -149,7 +149,8 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a>
   <ul class="collapse">
   <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a>
   <ul class="collapse">
@@ -162,6 +163,7 @@ window.Quarto = {
   </ul></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
   <ul class="collapse">
+  <li><a href="#representative-traces-of-classified-recordings-and-quality-ratings" id="toc-representative-traces-of-classified-recordings-and-quality-ratings" class="nav-link" data-scroll-target="#representative-traces-of-classified-recordings-and-quality-ratings">Representative Traces of Classified Recordings and Quality Ratings</a></li>
   <li><a href="#descriptive-statistics" id="toc-descriptive-statistics" class="nav-link" data-scroll-target="#descriptive-statistics">Descriptive Statistics</a></li>
   <li><a href="#model-specification-elastic-net-classification" id="toc-model-specification-elastic-net-classification" class="nav-link" data-scroll-target="#model-specification-elastic-net-classification">Model Specification: Elastic Net Classification</a></li>
   <li><a href="#model-results" id="toc-model-results" class="nav-link" data-scroll-target="#model-results">Model Results</a>
@@ -199,7 +201,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 14, 2026</p>
+      <p class="date">August 17, 2026</p>
     </div>
   </div>
   
@@ -211,10 +213,26 @@ window.Quarto = {
 </header>
 
 
-<section id="introduction" class="level1">
-<h1>Introduction</h1>
+<section id="overview" class="level1">
+<h1>Overview</h1>
 <p>Fiber photometry is a commonly used technique to record in vivo neural activity and neurotransmitter dynamics. Fiber photometry requires the expression of a fluorescent sensor and the implantation of a fiber optic cannula through which changes in fluorescence can be measured in real time. Surgical success rates vary and the classification of subjects with real biological signal is critical to maintaining the quality of collected data sets, which is critical for robust, replicable, and interpretable scientific findings. Subjective assessment of signal presence and quality presents a challenge both in the determination of data inclusion criteria and in consistency between researchers.</p>
 <p>The goal of this analysis was to enable automatic classification of individual subject fiber photometry recordings and identify subjects with biological signal versus those lacking biological signal. To do so, I applied an elastic net logistic regression model to establish a robust classification threshold for predicting the presence of a true signal based on extracted features.</p>
+</section>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>Fiber photometry is a relatively new technique to record in vivo neural activity through the use of biosensors. Biosensors fluoresce in response to ligand binding, providing users a method by which to assay changes in activity via the collection of relative changes in the intensity of collected fluorescence. Numerous sensors exist to assay cell body activity via calcium activity (e.g., GCaMP), or extracellular neurotransmitter release. To record dopamine (DA) activity, common approaches include cell body recording via Cre dependent GCaMP6f in a TH:Cre rat line, or dopamine sensors expressed downstream in regions like the nucleus accumbens (NAc). Two primary families of DA sensors are utilized (GRAB and dLight sensors), which vary with respect to binding affinity, temporal kinetics, and dynamic range. Across all sensors, recordings of cell body or downstream release activity in the NAc can detect both spontaneous and evoked activity reliably.</p>
+<p>In vivo fiber photometry requires surgical preparation to express the fluorescent sensor via injection of a viral vector construct (e.g., GRABDA2h or dLight1.3b) and the implantation of a fiber optic cannula. Surgical success rates vary, as numerous factors affect the ultimate quality of the in vivo signal. Surgical technique is critical to ensure injection success (infusion, placement) and correct placement of the fiber optic implant. Failure of the injector, damage to the fiber optic implant, or off-target implantation can result in lack of signal during in vivo fiber photometry recordings. Additional factors including by not limited to post-operative inflammation, blood flow artifact, and sensor expression can also affect the quality of the signal.</p>
+<p>Prior to experimentation, it is critical to include subjects with high quality signal and exclude those with low-quality or no signal to maintain the quality and validity of experimental data sets. Identifying if individual subjects display sufficient signal for experimental manipulations is critical to maintaining the quality of experimental data sets for many reasons:</p>
+<ul>
+<li><p><strong>Noise:</strong> Including subjects with poor quality signal can add noise to the ultimate experimental conclusion, obscuring valid scientific conclusions or potentially resulting in incorrect interpretations (opposite effect, null findings, etc)</p></li>
+<li><p><strong>Long term validity:</strong> Photobleaching occurs across repeated recordings in all subjects, which decreases the overall strength of the fluorescent signal intensity. In subjects with poor quality signal at the start of the experiment, photobleaching can entirely eliminate the signal by the end of the experimental paradigm</p></li>
+<li><p><strong>A Priori Inclusion:</strong> After experimental data has been collected, the removal of subjects with low quality signal is difficult and ethically complicated. Experimenter bias towards inclusion or exclusion based on the individual subjects results is a significant risk. Even with careful decision making, excluding subjects without an objective criteria is questionable and opens up the project to criticism and skepticism regarding the potential for skewed or cherry picked results.</p></li>
+</ul>
+<p>Thus, classifying subjects for inclusion in fiber photometry experiments prior to the initiation of experimental protocols is critical to maintaining both data quality and appropriate data practices.</p>
+<p>Over the course of experimental protocols, inevitably cases will occur where signal is lost in individual subjects due to a multitude of reasons including photobleaching, inflammation, issues with headcap viability, and duration of protocol. Additionally, individual sessions may fail to record viable signal due to issues with the patch cord, connection between the patchcord and fiber optic ferrule, or animal behavior resulting in degradation of the connection. In these circumstances, identifying an objective inclusion/exclusion criterion to apply to filter session recordings for inclusion is particularly critical.</p>
+<p>The overall goal of this project was to create a model capable of automatically classifying in vivo fiber photometry recordings of dopamine activity as having signal or no signal, and provide a binary inclusion/exclusion decision. To do so, I first hand scored in vivo fiber photometry recordings from subjects with a variety of DA sensors (VTA GCaMP6f, NAc GRABDA2H, NAc dLight1.3b) as having signal or no signal, and scored the quality of the signal from 0 to 3. For each recording, numerous variables were quantified to charachterize the signal including descriptive statistics (mean, range), frequency domain magnitudes, and ratios between sensor-dependent and control streams. The dataset was split into training and testing data sets, and an elastic net model was trained and tested for accuracy compared to hand-scored classifications. Signal quality ratings were used to evaluate model accuracy and elucidate model classification errors.</p>
+<p>Elastic net was chosen as the optimal approach for several reasons: - <strong>Multicollinearity Handling:</strong> Quantified parameters may display significant pairwise collinearity by nature (i.e., multiple measures of variance, variance effects on frequency spectrum). Elastic net introduces a grouping effect that allows highligh correlated predictors to enter or leave the model together with proportional coefficient weights which stabilizes feature selection. - <strong>Preventing Overfitting:</strong> The elastic net model penalizes model complexity and contracts coefficients towards zero, which reduces model variance while maintaining low bias. - <strong>Sparsity:</strong> Redundant or uninformative metrics are automatically set to zero, extracting a concise set of features that contribute to accurate classification. - <strong>Customizable Decision Thresholds:</strong> The model outputs predicted probabilities which can be converted to discrete classifications. Classification thresholds can be tuned to prioritize sensitivity (minimizes false negatives) or specificity (minimizes false positives) depending on goals.</p>
+<p>Here we present the results of an elastic net model to automatically classify in vivo dopamine fiber photometry recordings as displaying signal or no signal. Overall, the model was highly accurate and produced consistent accurate classification of recordings based on extracted features of the signal-dependent, background, and processed data streams.</p>
 <section id="methods" class="level2">
 <h2 class="anchored" data-anchor-id="methods">Methods</h2>
 <p>All subjects in this data set were prepared for other experimental protocols. Recordings were conducted prior to the start of experimental protocols.</p>
@@ -228,7 +246,7 @@ window.Quarto = {
 </section>
 <section id="signal-classification" class="level3">
 <h3 class="anchored" data-anchor-id="signal-classification">Signal Classification</h3>
-<p>Fiber photometry recordings were hand scored as having ‘Signal’ or ‘No Signal’ based on the experimenter’s prior experience. Recordings were also assigned a quality score from 0 to 4, with 0 meaning no signal, 1 meaning low quality signal that should be classified as no signal, 2 meaning moderate signal of sufficient quality to be scored as having signal, and 3 meaning high quality signal.</p>
+<p>Fiber photometry recordings were hand scored as having ‘Signal’ or ‘No Signal’ based on prior experience and subjective evaluation. Recordings were also assigned a quality score from 0 to 4, with 0 meaning no signal, 1 meaning low quality signal that should be classified as no signal, 2 meaning moderate signal of sufficient quality to be scored as having signal, and 3 meaning high quality signal.</p>
 <p>Each recording was scored two times independently, and discrepancies were reconciled based on the signal quality ratings assigned in both scores.</p>
 </section>
 <section id="signal-processing" class="level3">
@@ -270,11 +288,14 @@ window.Quarto = {
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="fu">source.all</span>(<span class="fu">paste</span>(rootgithubpath,<span class="st">'FPSignalCharacterizationAutomation/Functions/'</span>,<span class="at">sep=</span><span class="st">''</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>*** source Function_Plots.R </code></pre>
+<pre><code>*** source Function_Plots.R 
+*** source Functions_predictFPsignal.R </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>*** source Functions_SetPlotVariables.R </code></pre>
 </div>
+</div>
+<div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Read in data and prep variables -----</span></span>
@@ -367,6 +388,12 @@ window.Quarto = {
 </section>
 <section id="results" class="level1">
 <h1>Results</h1>
+<section id="representative-traces-of-classified-recordings-and-quality-ratings" class="level2">
+<h2 class="anchored" data-anchor-id="representative-traces-of-classified-recordings-and-quality-ratings">Representative Traces of Classified Recordings and Quality Ratings</h2>
+<p><strong>Representative Trace: No Signal, Quality = 0</strong> <img src="C:/Users/rmdon/Desktop/GitHub_MyRepositories/FPSignalCharacterizationAutomation/Example%20Traces/SignalN_Quality0_dLight.png" class="img-fluid quarto-figure quarto-figure-center" style="width:40.0%" alt="Representative Trace: No Signal, Quality 0"></p>
+<p><strong>Representative Trace: No Signal, Quality = 1:</strong> <img src="C:/Users/rmdon/Desktop/GitHub_MyRepositories/FPSignalCharacterizationAutomation/Example%20Traces/SignalN_Quality1_dLight.png" class="img-fluid quarto-figure quarto-figure-center" style="width:40.0%" alt="Representative Trace: No Signal, Quality 1"> <strong>Representative Trace: Signal, Quality = 2:</strong> <img src="C:/Users/rmdon/Desktop/GitHub_MyRepositories/FPSignalCharacterizationAutomation/Example%20Traces/SignalY_Quality2_dLight.png" class="img-fluid quarto-figure quarto-figure-center" style="width:40.0%" alt="Representative Trace: Signal, Quality 2"></p>
+<p><strong>Representative Trace: Signal, Quality = 3:</strong> <img src="C:/Users/rmdon/Desktop/GitHub_MyRepositories/FPSignalCharacterizationAutomation/Example%20Traces/SignalY_Quality3_dLight.png" class="img-fluid quarto-figure quarto-figure-center" style="width:40.0%" alt="Representative Trace: Signal, Quality 3"></p>
+</section>
 <section id="descriptive-statistics" class="level2">
 <h2 class="anchored" data-anchor-id="descriptive-statistics">Descriptive Statistics</h2>
 <p>First, to observe general trends among recordings scored as ‘Signal’ and ‘No Signal’, descriptive statistics were quantified for critical variables used in the model.</p>
@@ -809,11 +836,11 @@ window.Quarto = {
 <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>ENdata_test  <span class="ot">&lt;-</span> ENdata <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Set <span class="sc">==</span> <span class="st">"Test"</span>)<span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>Set, <span class="sc">-</span>Split)</span>
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Create design matrix of predictors (excluding SubjectID)</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>EN_x_train <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> .<span class="sc">-</span>Signal <span class="sc">-</span>SignalQuality <span class="sc">-</span>SubjectID <span class="sc">-</span>Sensor, <span class="at">data =</span> ENdata_train)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>EN_x_train <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> . <span class="sc">-</span><span class="dv">1</span> <span class="sc">-</span>Signal <span class="sc">-</span>SignalQuality <span class="sc">-</span>SubjectID <span class="sc">-</span>Sensor, <span class="at">data =</span> ENdata_train)</span>
 <span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>EN_y_train <span class="ot">&lt;-</span> ENdata_train<span class="sc">$</span>Signal</span>
 <span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare test</span></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>EN_x_test <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> .<span class="sc">-</span>Signal <span class="sc">-</span>SignalQuality <span class="sc">-</span>SubjectID<span class="sc">-</span>Sensor, <span class="at">data =</span> ENdata_test)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>EN_x_test <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> . <span class="sc">-</span><span class="dv">1</span> <span class="sc">-</span>Signal <span class="sc">-</span>SignalQuality <span class="sc">-</span>SubjectID<span class="sc">-</span>Sensor, <span class="at">data =</span> ENdata_test)</span>
 <span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>EN_y_test <span class="ot">&lt;-</span> ENdata_test<span class="sc">$</span>Signal</span>
 <span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="do">## Fit elastic net -----</span></span>

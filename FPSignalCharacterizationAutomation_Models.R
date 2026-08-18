@@ -3,7 +3,7 @@
 rootgithubpath <- c('C:/Users/rmdon/Desktop/GitHub_MyRepositories/') # Path for Rachel's laptop to github repositories
 rootboxpath <- c('C:/Users/rmdon/Box/') # Path for Rachel's laptop to Box drive
 
-# Load libraries we will need
+# Load libraries
 library(caTools)
 library(randomForest)
 library(glmnet)
@@ -12,12 +12,26 @@ library(caret)
 library(pROC)
 library(tidyr)
 library(rsample)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(forcats)
+library(emmeans)
+library(patchwork)
+library(miceadds)
+library(ggprism)
+library(tibble)
+library(cowplot)
 
-# Load plot settings
-#source(paste(rootgithubpath,"Analysis-FP/Functions_R/Functions_SetPlotVariables.R",sep=''))
+# Define paths
+rootgithubpath <- c('C:/Users/rmdon/Desktop/GitHub_MyRepositories/') 
+rootboxpath <- c('C:/Users/rmdon/Box/') 
 
-# Set working directory to where the data is saved
-setwd(paste(rootboxpath, 'Roitman Data Repository/Projects/2026_FPSignalCharacterizationAutomation_RD/Analysis/',sep=''))
+source.all(paste(rootgithubpath,'FPSignalCharacterizationAutomation/Functions/',sep=''))
+
+## Read in data and prep variables -----
+subjectvariables <- read_csv(paste(rootboxpath, 'Roitman Data Repository/Projects/2026_FPSignalCharacterizationAutomation_RD/Analysis/', 'FPSignalCharacterizationAutomation_ExperimentalVariables.csv',sep=''))
+data_raw <- read_csv(paste(rootboxpath, 'Roitman Data Repository/Projects/2026_FPSignalCharacterizationAutomation_RD/Analysis/', 'FPSignalCharacterizationAutomation_AllQuantificationVariables.csv',sep=''))
 
 # PREPARE DATA -----
 
@@ -105,8 +119,7 @@ includevariables_labels <- c('Raw Signal Range', 'Raw Signal RMS', 'Raw Signal L
 
 modeldata <- data_wide %>% select(all_of(IDvariables), all_of(includevariables))
 
-# Raw Variable Plots -----
-## Prepare means
+## Prepare means -----
 ### Overall signal means
 modeldata_signalmeans <- modeldata %>%
   group_by(Signal) %>% 
@@ -118,9 +131,8 @@ modeldata_signalmeans <- modeldata %>%
       se   = ~sd(.x, na.rm = TRUE) / sqrt(sum(!is.na(.x))))),
     .groups = "drop"
   )
-    
-modeldata_signalmeans   
-  
+
+
 ### Overall signal means by sensor
 modeldata_sensorsignalmeans <- modeldata %>%
   group_by(Sensor, Signal) %>% 
@@ -133,7 +145,6 @@ modeldata_sensorsignalmeans <- modeldata %>%
     .groups = "drop" 
   )
 
-modeldata_sensorsignalmeans   
 
 ### Signal Quality means
 modeldata_signalqualitymeans <- modeldata %>%
@@ -147,7 +158,6 @@ modeldata_signalqualitymeans <- modeldata %>%
     .groups = "drop"
   )
 
-modeldata_signalqualitymeans   
 
 ### Signal Quality means by sensor
 modeldata_sensorsignalqualitymeans <- modeldata %>%
@@ -161,11 +171,10 @@ modeldata_sensorsignalqualitymeans <- modeldata %>%
     .groups = "drop"
   )
 
-modeldata_sensorsignalqualitymeans   
 
 
-## Plots
-## Signal Range
+# DESCRIPTIVE PLOTS -----
+## Signal Range -----
 dv_sig_range_bins <- 'sig_range_bins'
 iv_sig_range_bins <- 'Signal'
 
@@ -183,14 +192,12 @@ plottitle_sig_range_bins <- 'Mean Raw Signal Stream Range'
 plotsubtitle_sig_range_bins <- 'Raw signal range is greater in rats with signal.'
 
 signalbar_sig_range_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sig_range_bins, iv_sig_range_bins, 
-                                     ymin_sig_range_bins, ymax_sig_range_bins, ybreaks_sig_range_bins, 
-                                     xbreaklabels_sig_range_bins, ylabel_sig_range_bins, xlabel_sig_range_bins, 
-                                     plottitle_sig_range_bins, plotsubtitle_sig_range_bins)
-  
-signalbar_sig_range_bins
-  
+                                                        ymin_sig_range_bins, ymax_sig_range_bins, ybreaks_sig_range_bins, 
+                                                        xbreaklabels_sig_range_bins, ylabel_sig_range_bins, xlabel_sig_range_bins, 
+                                                        plottitle_sig_range_bins, plotsubtitle_sig_range_bins)
 
-## Signal RMS
+
+## Signal RMS -----
 dv_sig_rms_bins <- 'sig_rms_bins'
 iv_sig_rms_bins <- 'Signal'
 
@@ -208,15 +215,12 @@ plottitle_sig_rms_bins <- 'Mean Raw Signal Stream Root Mean Squared'
 plotsubtitle_sig_rms_bins <- 'Raw signal RMS is greater in rats with signal.'
 
 signalbar_sig_rms_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sig_rms_bins, iv_sig_rms_bins, 
-                                                        ymin_sig_rms_bins, ymax_sig_rms_bins, ybreaks_sig_rms_bins, 
-                                                        xbreaklabels_sig_rms_bins, ylabel_sig_rms_bins, xlabel_sig_rms_bins, 
-                                                        plottitle_sig_rms_bins, plotsubtitle_sig_rms_bins)
-
-signalbar_sig_rms_bins
+                                                      ymin_sig_rms_bins, ymax_sig_rms_bins, ybreaks_sig_rms_bins, 
+                                                      xbreaklabels_sig_rms_bins, ylabel_sig_rms_bins, xlabel_sig_rms_bins, 
+                                                      plottitle_sig_rms_bins, plotsubtitle_sig_rms_bins)
 
 
-
-## Scaled Background Range
+## Scaled Background Range -----
 dv_baqscaled_range_bins <- 'baqscaled_range_bins'
 iv_baqscaled_range_bins <- 'Signal'
 
@@ -234,14 +238,13 @@ plottitle_baqscaled_range_bins <- 'Mean Scaled Background Range'
 plotsubtitle_baqscaled_range_bins <- 'Scaled background range is greater in rats with signal.'
 
 signalbar_baqscaled_range_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_baqscaled_range_bins, iv_baqscaled_range_bins, 
-                                                        ymin_baqscaled_range_bins, ymax_baqscaled_range_bins, ybreaks_baqscaled_range_bins, 
-                                                        xbreaklabels_baqscaled_range_bins, ylabel_baqscaled_range_bins, xlabel_baqscaled_range_bins, 
-                                                        plottitle_baqscaled_range_bins, plotsubtitle_baqscaled_range_bins)
-
-signalbar_baqscaled_range_bins
+                                                              ymin_baqscaled_range_bins, ymax_baqscaled_range_bins, ybreaks_baqscaled_range_bins, 
+                                                              xbreaklabels_baqscaled_range_bins, ylabel_baqscaled_range_bins, xlabel_baqscaled_range_bins, 
+                                                              plottitle_baqscaled_range_bins, plotsubtitle_baqscaled_range_bins)
 
 
-## Scaled Background RMS
+
+## Scaled Background RMS -----
 dv_baqscaled_rms_bins <- 'baqscaled_rms_bins'
 iv_baqscaled_rms_bins <- 'Signal'
 
@@ -256,17 +259,15 @@ ylabel_baqscaled_rms_bins <- 'Scaled Background RMS'
 xlabel_baqscaled_rms_bins <- 'Signal (Y/N)'
 
 plottitle_baqscaled_rms_bins <- 'Mean Scaled Background Stream Root Mean Squared'
-plotsubtitle_baqscaled_rms_bins <- 'Scaled background RMS is similar in rats with and without signal.'
+plotsubtitle_baqscaled_rms_bins <- 'Scaled background RMS is greater in rats with signal.'
 
 signalbar_baqscaled_rms_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_baqscaled_rms_bins, iv_baqscaled_rms_bins, 
-                                                        ymin_baqscaled_rms_bins, ymax_baqscaled_rms_bins, ybreaks_baqscaled_rms_bins, 
-                                                        xbreaklabels_baqscaled_rms_bins, ylabel_baqscaled_rms_bins, xlabel_baqscaled_rms_bins, 
-                                                        plottitle_baqscaled_rms_bins, plotsubtitle_baqscaled_rms_bins)
-
-signalbar_baqscaled_rms_bins
+                                                            ymin_baqscaled_rms_bins, ymax_baqscaled_rms_bins, ybreaks_baqscaled_rms_bins, 
+                                                            xbreaklabels_baqscaled_rms_bins, ylabel_baqscaled_rms_bins, xlabel_baqscaled_rms_bins, 
+                                                            plottitle_baqscaled_rms_bins, plotsubtitle_baqscaled_rms_bins)
 
 
-## Subtracted Signal RMS
+## Subtracted Signal RMS -----
 dv_sigsub_rms_bins <- 'sigsub_rms_bins'
 iv_sigsub_rms_bins <- 'Signal'
 
@@ -284,13 +285,12 @@ plottitle_sigsub_rms_bins <- 'Mean Subtracted Signal Stream Root Mean Squared'
 plotsubtitle_sigsub_rms_bins <- 'Subtracted signal RMS is greater in rats with signal.'
 
 signalbar_sigsub_rms_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigsub_rms_bins, iv_sigsub_rms_bins, 
-                                                      ymin_sigsub_rms_bins, ymax_sigsub_rms_bins, ybreaks_sigsub_rms_bins, 
-                                                      xbreaklabels_sigsub_rms_bins, ylabel_sigsub_rms_bins, xlabel_sigsub_rms_bins, 
-                                                      plottitle_sigsub_rms_bins, plotsubtitle_sigsub_rms_bins)
+                                                         ymin_sigsub_rms_bins, ymax_sigsub_rms_bins, ybreaks_sigsub_rms_bins, 
+                                                         xbreaklabels_sigsub_rms_bins, ylabel_sigsub_rms_bins, xlabel_sigsub_rms_bins, 
+                                                         plottitle_sigsub_rms_bins, plotsubtitle_sigsub_rms_bins)
 
-signalbar_sigsub_rms_bins
 
-## Subtracted Signal Range
+## Subtracted Signal Range -----
 dv_sigsub_range_bins <- 'sigsub_range_bins'
 iv_sigsub_range_bins <- 'Signal'
 
@@ -312,11 +312,9 @@ signalbar_sigsub_range_bins <- plotdescriptives_signal_bar(modeldata_signalmeans
                                                            xbreaklabels_sigsub_range_bins, ylabel_sigsub_range_bins, xlabel_sigsub_range_bins, 
                                                            plottitle_sigsub_range_bins, plotsubtitle_sigsub_range_bins)
 
-signalbar_sigsub_range_bins
 
-
-
-## Subtracted Signal Magnitude - Band 1
+## Subtracted Signal Magnitude -----
+### Band 1
 dv_sigsub_MagSum_Band1_bins <- 'sigsub_MagSum_Band1'
 iv_sigsub_MagSum_Band1_bins <- 'Signal'
 
@@ -331,16 +329,14 @@ ylabel_sigsub_MagSum_Band1_bins <- 'Total Magnitude (0.0051 to 2.5 Hz)'
 xlabel_sigsub_MagSum_Band1_bins <- 'Signal (Y/N)'
 
 plottitle_sigsub_MagSum_Band1_bins <- 'Mean Subtracted Signal Stream Magnitude - 0.0051 to 2.5 Hz'
-plotsubtitle_sigsub_MagSum_Band1_bins <- 'Subtracted signal magnitude in the low frequency band is greater in rats with signal.'
+plotsubtitle_sigsub_MagSum_Band1_bins <- 'Subtracted signal low freq. magnitude is greater in rats with signal.'
 
 signalbar_sigsub_MagSum_Band1_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigsub_MagSum_Band1_bins, iv_sigsub_MagSum_Band1_bins, 
-                                                           ymin_sigsub_MagSum_Band1_bins, ymax_sigsub_MagSum_Band1_bins, ybreaks_sigsub_MagSum_Band1_bins, 
-                                                           xbreaklabels_sigsub_MagSum_Band1_bins, ylabel_sigsub_MagSum_Band1_bins, xlabel_sigsub_MagSum_Band1_bins, 
-                                                           plottitle_sigsub_MagSum_Band1_bins, plotsubtitle_sigsub_MagSum_Band1_bins)
+                                                                  ymin_sigsub_MagSum_Band1_bins, ymax_sigsub_MagSum_Band1_bins, ybreaks_sigsub_MagSum_Band1_bins, 
+                                                                  xbreaklabels_sigsub_MagSum_Band1_bins, ylabel_sigsub_MagSum_Band1_bins, xlabel_sigsub_MagSum_Band1_bins, 
+                                                                  plottitle_sigsub_MagSum_Band1_bins, plotsubtitle_sigsub_MagSum_Band1_bins)
 
-signalbar_sigsub_MagSum_Band1_bins
-
-## Subtracted Signal Magnitude - Band 2
+### Band 2
 dv_sigsub_MagSum_Band2_bins <- 'sigsub_MagSum_Band2'
 iv_sigsub_MagSum_Band2_bins <- 'Signal'
 
@@ -355,18 +351,15 @@ ylabel_sigsub_MagSum_Band2_bins <- 'Total Magnitude (2.5 to 10 Hz)'
 xlabel_sigsub_MagSum_Band2_bins <- 'Signal (Y/N)'
 
 plottitle_sigsub_MagSum_Band2_bins <- 'Mean Subtracted Signal Stream Magnitude - 2.5 to 10 Hz'
-plotsubtitle_sigsub_MagSum_Band2_bins <- 'Subtracted signal magnitude in the medium frequency band is greater in rats with signal.'
+plotsubtitle_sigsub_MagSum_Band2_bins <- 'Subtracted signal medium freq. magnitude is greater in rats with signal.'
 
 signalbar_sigsub_MagSum_Band2_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigsub_MagSum_Band2_bins, iv_sigsub_MagSum_Band2_bins, 
                                                                   ymin_sigsub_MagSum_Band2_bins, ymax_sigsub_MagSum_Band2_bins, ybreaks_sigsub_MagSum_Band2_bins, 
                                                                   xbreaklabels_sigsub_MagSum_Band2_bins, ylabel_sigsub_MagSum_Band2_bins, xlabel_sigsub_MagSum_Band2_bins, 
                                                                   plottitle_sigsub_MagSum_Band2_bins, plotsubtitle_sigsub_MagSum_Band2_bins)
 
-signalbar_sigsub_MagSum_Band2_bins
 
-
-
-## Subtracted Signal Magnitude - Band 3
+### Band 3
 dv_sigsub_MagSum_Band3_bins <- 'sigsub_MagSum_Band3'
 iv_sigsub_MagSum_Band3_bins <- 'Signal'
 
@@ -381,43 +374,16 @@ ylabel_sigsub_MagSum_Band3_bins <- 'Total Magnitude (10 to 100 Hz)'
 xlabel_sigsub_MagSum_Band3_bins <- 'Signal (Y/N)'
 
 plottitle_sigsub_MagSum_Band3_bins <- 'Mean Subtracted Signal Stream Magnitude - 10 to 100 Hz'
-plotsubtitle_sigsub_MagSum_Band3_bins <- 'Subtracted signal magnitude in the high frequency band is greater in rats with signal.'
+plotsubtitle_sigsub_MagSum_Band3_bins <- 'Subtracted signal high freq. magnitude is greater in rats with signal.'
 
 signalbar_sigsub_MagSum_Band3_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigsub_MagSum_Band3_bins, iv_sigsub_MagSum_Band3_bins, 
                                                                   ymin_sigsub_MagSum_Band3_bins, ymax_sigsub_MagSum_Band3_bins, ybreaks_sigsub_MagSum_Band3_bins, 
                                                                   xbreaklabels_sigsub_MagSum_Band3_bins, ylabel_sigsub_MagSum_Band3_bins, xlabel_sigsub_MagSum_Band3_bins, 
                                                                   plottitle_sigsub_MagSum_Band3_bins, plotsubtitle_sigsub_MagSum_Band3_bins)
 
-signalbar_sigsub_MagSum_Band3_bins
 
-
-
-## Raw signal to scaled background range
-dv_sigtobaqscaled_range_bins_scaled <- 'sigtobaqscaled_rms_bins_scaled'
-iv_sigtobaqscaled_range_bins_scaled <- 'Signal'
-
-ymin_sigtobaqscaled_range_bins_scaled <- -.08
-ymax_sigtobaqscaled_range_bins_scaled <- .08
-yticks_sigtobaqscaled_range_bins_scaled <- .4
-ybreaks_sigtobaqscaled_range_bins_scaled <- seq(ymin_sigtobaqscaled_range_bins_scaled,ymax_sigtobaqscaled_range_bins_scaled,yticks_sigtobaqscaled_range_bins_scaled)
-
-xbreaklabels_sigtobaqscaled_range_bins_scaled <- c('N','Y')
-
-ylabel_sigtobaqscaled_range_bins_scaled <- 'Ratio (Raw Signal : Scaled Background RMS)'
-xlabel_sigtobaqscaled_range_bins_scaled <- 'Signal (Y/N)'
-
-plottitle_sigtobaqscaled_range_bins_scaled <- 'Ratio of Signal Stream to Scaled Background Stream RMS'
-plotsubtitle_sigtobaqscaled_range_bins_scaled <- 'Ratio is comparable in rats with and without signal.'
-
-signalbar_sigtobaqscaled_range_bins_scaled <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigtobaqscaled_range_bins_scaled, iv_sigtobaqscaled_range_bins_scaled, 
-                                                                         ymin_sigtobaqscaled_range_bins_scaled, ymax_sigtobaqscaled_range_bins_scaled, ybreaks_sigtobaqscaled_range_bins_scaled, 
-                                                                         xbreaklabels_sigtobaqscaled_range_bins_scaled, ylabel_sigtobaqscaled_range_bins_scaled, xlabel_sigtobaqscaled_range_bins_scaled, 
-                                                                         plottitle_sigtobaqscaled_range_bins_scaled, plotsubtitle_sigtobaqscaled_range_bins_scaled)
-
-signalbar_sigtobaqscaled_range_bins_scaled
-
-
-## Signal to Scaled Background Magnitude - Band 1
+## Signal to Scaled Background Magnitude -----
+### Band 1
 dv_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'sigtobaqscaled_MagSum_Band1_scaled'
 iv_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Signal'
 
@@ -432,18 +398,15 @@ ylabel_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Magnitude Ratio (0.0051 to 2.
 xlabel_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Signal (Y/N)'
 
 plottitle_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Ratio of Signal to Scaled Background Stream Magnitude - 0.0051 to 2.5 Hz'
-plotsubtitle_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Ratio in the low frequency band is higher in rats with signal.'
+plotsubtitle_sigtobaqscaled_MagSum_Band1_scaled_bins <- 'Ratio in the low freq. band is higher in rats with signal.'
 
 signalbar_sigtobaqscaled_MagSum_Band1_scaled_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigtobaqscaled_MagSum_Band1_scaled_bins, iv_sigtobaqscaled_MagSum_Band1_scaled_bins, 
-                                                                  ymin_sigtobaqscaled_MagSum_Band1_scaled_bins, ymax_sigtobaqscaled_MagSum_Band1_scaled_bins, ybreaks_sigtobaqscaled_MagSum_Band1_scaled_bins, 
-                                                                  xbreaklabels_sigtobaqscaled_MagSum_Band1_scaled_bins, ylabel_sigtobaqscaled_MagSum_Band1_scaled_bins, xlabel_sigtobaqscaled_MagSum_Band1_scaled_bins, 
-                                                                  plottitle_sigtobaqscaled_MagSum_Band1_scaled_bins, plotsubtitle_sigtobaqscaled_MagSum_Band1_scaled_bins)
-
-signalbar_sigtobaqscaled_MagSum_Band1_scaled_bins
+                                                                                 ymin_sigtobaqscaled_MagSum_Band1_scaled_bins, ymax_sigtobaqscaled_MagSum_Band1_scaled_bins, ybreaks_sigtobaqscaled_MagSum_Band1_scaled_bins, 
+                                                                                 xbreaklabels_sigtobaqscaled_MagSum_Band1_scaled_bins, ylabel_sigtobaqscaled_MagSum_Band1_scaled_bins, xlabel_sigtobaqscaled_MagSum_Band1_scaled_bins, 
+                                                                                 plottitle_sigtobaqscaled_MagSum_Band1_scaled_bins, plotsubtitle_sigtobaqscaled_MagSum_Band1_scaled_bins)
 
 
-
-## Signal to Scaled Background Magnitude - Band 2
+### Band 2
 dv_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'sigtobaqscaled_MagSum_Band2_scaled'
 iv_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Signal'
 
@@ -458,17 +421,15 @@ ylabel_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Magnitude Ratio (2.5 to 10 Hz
 xlabel_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Signal (Y/N)'
 
 plottitle_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Ratio of Signal to Scaled Background Stream Magnitude - 2.5 to 10 Hz'
-plotsubtitle_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Ratio in the medium frequency band is higher in rats with signal.'
+plotsubtitle_sigtobaqscaled_MagSum_Band2_scaled_bins <- 'Ratio in the medium freq. band is higher in rats with signal.'
 
 signalbar_sigtobaqscaled_MagSum_Band2_scaled_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigtobaqscaled_MagSum_Band2_scaled_bins, iv_sigtobaqscaled_MagSum_Band2_scaled_bins, 
-                                                                          ymin_sigtobaqscaled_MagSum_Band2_scaled_bins, ymax_sigtobaqscaled_MagSum_Band2_scaled_bins, ybreaks_sigtobaqscaled_MagSum_Band2_scaled_bins, 
-                                                                          xbreaklabels_sigtobaqscaled_MagSum_Band2_scaled_bins, ylabel_sigtobaqscaled_MagSum_Band2_scaled_bins, xlabel_sigtobaqscaled_MagSum_Band2_scaled_bins, 
-                                                                          plottitle_sigtobaqscaled_MagSum_Band2_scaled_bins, plotsubtitle_sigtobaqscaled_MagSum_Band2_scaled_bins)
-
-signalbar_sigtobaqscaled_MagSum_Band2_scaled_bins
+                                                                                 ymin_sigtobaqscaled_MagSum_Band2_scaled_bins, ymax_sigtobaqscaled_MagSum_Band2_scaled_bins, ybreaks_sigtobaqscaled_MagSum_Band2_scaled_bins, 
+                                                                                 xbreaklabels_sigtobaqscaled_MagSum_Band2_scaled_bins, ylabel_sigtobaqscaled_MagSum_Band2_scaled_bins, xlabel_sigtobaqscaled_MagSum_Band2_scaled_bins, 
+                                                                                 plottitle_sigtobaqscaled_MagSum_Band2_scaled_bins, plotsubtitle_sigtobaqscaled_MagSum_Band2_scaled_bins)
 
 
-## Signal to Scaled Background Magnitude - Band 3
+### Band 3
 dv_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'sigtobaqscaled_MagSum_Band3_scaled'
 iv_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Signal'
 
@@ -483,17 +444,47 @@ ylabel_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Magnitude Ratio (10 to 100 Hz
 xlabel_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Signal (Y/N)'
 
 plottitle_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Ratio of Signal to Scaled Background Stream Magnitude - 10 to 100 Hz'
-plotsubtitle_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Ratio in the high frequency band is similar in rats with and without signal.'
+plotsubtitle_sigtobaqscaled_MagSum_Band3_scaled_bins <- 'Ratio in the high freq. band is higher in rats with signal.'
 
 signalbar_sigtobaqscaled_MagSum_Band3_scaled_bins <- plotdescriptives_signal_bar(modeldata_signalmeans, modeldata, dv_sigtobaqscaled_MagSum_Band3_scaled_bins, iv_sigtobaqscaled_MagSum_Band3_scaled_bins, 
-                                                                          ymin_sigtobaqscaled_MagSum_Band3_scaled_bins, ymax_sigtobaqscaled_MagSum_Band3_scaled_bins, ybreaks_sigtobaqscaled_MagSum_Band3_scaled_bins, 
-                                                                          xbreaklabels_sigtobaqscaled_MagSum_Band3_scaled_bins, ylabel_sigtobaqscaled_MagSum_Band3_scaled_bins, xlabel_sigtobaqscaled_MagSum_Band3_scaled_bins, 
-                                                                          plottitle_sigtobaqscaled_MagSum_Band3_scaled_bins, plotsubtitle_sigtobaqscaled_MagSum_Band3_scaled_bins)
+                                                                                 ymin_sigtobaqscaled_MagSum_Band3_scaled_bins, ymax_sigtobaqscaled_MagSum_Band3_scaled_bins, ybreaks_sigtobaqscaled_MagSum_Band3_scaled_bins, 
+                                                                                 xbreaklabels_sigtobaqscaled_MagSum_Band3_scaled_bins, ylabel_sigtobaqscaled_MagSum_Band3_scaled_bins, xlabel_sigtobaqscaled_MagSum_Band3_scaled_bins, 
+                                                                                 plottitle_sigtobaqscaled_MagSum_Band3_scaled_bins, plotsubtitle_sigtobaqscaled_MagSum_Band3_scaled_bins)
 
-signalbar_sigtobaqscaled_MagSum_Band3_scaled_bins
+## Panels -----
+plot_grid(signalbar_sig_rms_bins,
+          signalbar_sig_range_bins,
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('A','B'))
+
+plot_grid(signalbar_baqscaled_rms_bins,
+          signalbar_baqscaled_range_bins,
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('C','D'))
+
+plot_grid(signalbar_sigsub_rms_bins,
+          signalbar_sigsub_range_bins,
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('E','F'))
+
+plot_grid(signalbar_sigsub_MagSum_Band1_bins,
+          signalbar_sigsub_MagSum_Band2_bins,
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('G','H'))
+
+plot_grid(signalbar_sigsub_MagSum_Band3_bins,
+          signalbar_sigtobaqscaled_MagSum_Band1_scaled_bins,
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('I','J'))
+
+plot_grid(signalbar_sigtobaqscaled_MagSum_Band2_scaled_bins,
+          signalbar_sigtobaqscaled_MagSum_Band3_scaled_bins,
+          ncol = 2, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('K','L'))
 
 
-# ELASTIC NET - SIGNAL -----
+
+# ELASTIC NET MODEL -----
 ## Prepare train and test data -----
 # Remove extra columns
 ENdata <- modeldata
@@ -503,11 +494,11 @@ ENdata_train <- ENdata %>% filter(Set == "Train") %>% select(-Set, -Split)
 ENdata_test  <- ENdata %>% filter(Set == "Test")%>% select(-Set, -Split)
 
 # Create design matrix of predictors (excluding SubjectID)
-EN_x_train <- model.matrix(~ .-Signal -SignalQuality -SubjectID -Sensor, data = ENdata_train)
+EN_x_train <- model.matrix(~ . -1 -Signal -SignalQuality -SubjectID -Sensor, data = ENdata_train)
 EN_y_train <- ENdata_train$Signal
 
 # Prepare test
-EN_x_test <- model.matrix(~ .-Signal -SignalQuality -SubjectID-Sensor, data = ENdata_test)
+EN_x_test <- model.matrix(~ . -1 -Signal -SignalQuality -SubjectID-Sensor, data = ENdata_test)
 EN_y_test <- ENdata_test$Signal
 
 ## Fit elastic net -----
@@ -543,10 +534,8 @@ EN_pred_prob <- predict(EN_cv, newx = EN_x_test, s = "lambda.min", type = "respo
 
 # Confusion matrix
 EN_confusion <- table(Predicted = EN_test_preds, Actual = EN_y_test)
-print(EN_confusion)
 
 accuracy <- mean(EN_test_preds == EN_y_test)
-accuracy
 
 
 # Extract coefficients
@@ -556,6 +545,14 @@ EN_coef <- coef(EN_finalmodel) %>%
   rownames_to_column("variable") %>%
   rename(coefficient = `s0`) %>%
   filter(coefficient != 0 & variable != "(Intercept)")
+
+
+EN_coef_cleaned <- EN_coef %>%
+  mutate(abs_coef = abs(coefficient),
+         Direction = ifelse(coefficient > 0, "Predicts Signal", "Predicts No Signal"),
+         Signal = ifelse(coefficient > 0, "Y", "N")) %>%
+  arrange(desc(abs_coef)) %>%
+  slice(1:30) # Select top predictors
 
 
 variable_lookup <- setNames(includevariables_labels, includevariables)
@@ -574,10 +571,8 @@ EN_toppredictors <- EN_coef %>%
   mutate(abs_coef = abs(coefficient)) %>%
   arrange(desc(abs_coef))
 
-EN_toppredictors
 
-
-## ADD BACK CATEGORICAL ID VARIABLES -----
+## Add categorical variables back
 catvars <- data_wide %>% filter(Split == 1)
 
 EN_data_test_full <- ENdata_test %>%
@@ -594,7 +589,7 @@ EN_test_results <- EN_data_test_full %>%
 
 EN_test_results$SensorSignalQuality <- paste(EN_test_results$Sensor, EN_test_results$SignalQuality, sep='_')
 
-## SUMMARIZE -----
+## Prepare Means -----
 EN_test_results_summary_quality <- EN_test_results %>%
   group_by(Sensor, Signal, SignalQuality, SensorSignalQuality) %>%
   summarise(
@@ -621,7 +616,9 @@ EN_test_results_summary <- EN_test_results %>%
 
 #EN_test_results_summary
 
-## FIGURE 1: CV error curve
+# MODEL PLOTS -----
+
+## FIGURE 1: CV error curve -----
 cv_data <- tibble(
   lambda = EN_cv$lambda,
   log_lambda = log(EN_cv$lambda),
@@ -653,7 +650,7 @@ fig_cv_error <- ggplot(cv_data, aes(x = log_lambda, y = cvm)) +
 fig_cv_error
 
 
-# FIGURE 2: Variable Importance
+## FIGURE 2: Variable Importance -----
 fig_m1_variable_importance <- EN_coef_cleaned %>%
   ggplot(aes(x = coefficient, y = fct_reorder(variablename, coefficient), fill = Signal)) +
   geom_col() +
@@ -667,8 +664,8 @@ fig_m1_variable_importance <- EN_coef_cleaned %>%
 
 fig_m1_variable_importance
 
-
-# FIGURE 3: ROC Curve
+## FIGURE 3: Model Performance -----
+# FIGURE 3A: ROC Curve
 roc_obj <- roc(EN_y_test, as.numeric(EN_test_probs))
 auc_value <- round(auc(roc_obj), 3)
 
@@ -679,10 +676,8 @@ fig_m1_roc <- ggroc(roc_obj, color = colors_signal_Y, size = 1.2) +
        x = "Specificity (Correct 'No Signal' classification)", y = "Sensitivity (Correct 'Yes Signal' Classification)") +
   mytheme
 
-fig_m1_roc
 
-
-# FIGURE 4: Confusion Matrix Heatmap
+# FIGURE 3B: Confusion Matrix Heatmap
 en_cm_tidy <- EN_confusion %>%
   as.data.frame() %>% 
   mutate(Actual = factor(Actual, levels=rev(levels(Actual))),
@@ -698,14 +693,12 @@ fig_m1_confusion_matrix <- en_cm_tidy %>%
        x = "Predicted", y = "Actual") +
   mytheme_legend + theme(legend.position = 'right')
 
-fig_m1_confusion_matrix
 
-
-# FIGURE 5: Probability Density (Calibration Check)
+# FIGURE 3C: Probability Density (Calibration Check)
 fig_m1_probability_density <- EN_test_results %>%
   ggplot(aes(x = Prob_Y, fill = Signal)) +
   geom_density(alpha = 1, color=NA) +
-  geom_vline(xintercept = 0.5, linetype = "dashed", size = myaxislinewidth, color = "black") + # Classification threshold
+  geom_vline(xintercept = 0.5, linetype = "dashed", linewidth = myaxislinewidth, color = "black") + # Classification threshold
   scale_fill_manual(values = c("N" = colors_signal_N, "Y" = colors_signal_Y), name = "Actual Signal") +
   scale_y_continuous(expand=c(0,0), limits = c(0,10), breaks=seq(0,10,2.5)) +
   labs(title = "Predicted Probability vs. Actual Classification",
@@ -713,11 +706,15 @@ fig_m1_probability_density <- EN_test_results %>%
   mytheme_legend +
   theme(legend.position = "right")
 
-fig_m1_probability_density
+# Panel
+fig_modelperformance <- plot_grid(fig_m1_roc, fig_m1_confusion_matrix, fig_m1_probability_density,
+          ncol = 3, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = "AUTO")
 
+fig_modelperformance
 
-
-# FIGURE 5: Correct vs. Incorrect Counts by Signal Quality
+## FIGURE 4: Classfications by Quality
+# FIGURE 4A: Correct vs. Incorrect Counts by Signal Quality
 EN_test_results$Correct <- as.integer(EN_test_results$Correct)
 
 logit_model <- glm(Correct ~ factor(SignalQuality), data = EN_test_results, family = "binomial")
@@ -732,7 +729,7 @@ fig_m1_quality_counts <- EN_test_results %>%
   ggplot(aes(x = factor(SignalQuality), fill = Outcome)) +
   geom_bar(position = "stack", alpha = 1) +
   scale_fill_manual(values = c("Correct" = colors_signal_Y, "Incorrect" = colors_signal_N)) +
-  labs(title = "Classification Outcomes by Signal Quality",
+  labs(title = "Outcomes by Signal Quality",
        x = "Signal Quality Score", 
        y = "Test n",
        fill = "Model Prediction") +
@@ -740,10 +737,8 @@ fig_m1_quality_counts <- EN_test_results %>%
   mytheme_legend + 
   theme(legend.position = "right")
 
-fig_m1_quality_counts
 
-
-# FIGURE 6: Accuracy Percentage by Signal Quality
+# FIGURE 4B: Accuracy Percentage by Signal Quality
 fig_m1_quality_accuracy <- EN_test_results %>%
   filter(!is.na(SignalQuality)) %>%
   group_by(SignalQuality) %>%
@@ -758,41 +753,44 @@ fig_m1_quality_accuracy <- EN_test_results %>%
   scale_y_continuous(labels = scales::percent_format(), limits = c(0, 1.1)) +
   scale_fill_manual(values = colors_signalquality) +
   scale_y_continuous(expand=c(0,0),limits=c(0,1.1)) +
-  labs(title = "Model Accuracy by Signal Quality",
+  labs(title = "Accuracy by Signal Quality",
        x = "Signal Quality Score", 
        y = "Accuracy") +
   mytheme_legend + theme(legend.position = 'right') +
   geom_hline(yintercept=.5, linewidth=myaxislinewidth, linetype='dashed', color='black')
 
-fig_m1_quality_accuracy
 
-
-
-# FIGURE 7: Model Confidence (Probability) by Signal Quality and Actual Signal
+# FIGURE 4C: Model Confidence (Probability) by Signal Quality and Actual Signal
 fig_m1_quality_probs <- EN_test_results %>%
   filter(!is.na(SignalQuality)) %>%
   ggplot(aes(x = factor(SignalQuality), y = Prob_Y, fill = Signal)) +
   geom_boxplot(alpha = 1, outlier.shape = 21, outlier.size = 2) +
-  geom_hline(yintercept = 0.5, linetype = "dashed", color = "black", size = myaxislinewidth) + # The 0.5 decision boundary
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "black", linewidth = myaxislinewidth) + # The 0.5 decision boundary
   scale_fill_manual(values = c("N" = colors_signal_N, "Y" = colors_signal_Y), name = "Actual Signal Label") +
-  labs(title = "Model Confidence by Signal Quality",
+  labs(title = "Confidence by Signal Quality",
        x = "Signal Quality Score", 
        y = "Predicted Probability of Signal (Prob Y)") +
   theme_minimal(base_size = 14) +
   mytheme_legend + 
   theme(legend.position = "right")
 
-print(fig_m1_quality_probs)
+
+# Panel
+fig_classificationbyquality <- plot_grid(fig_m1_quality_counts, fig_m1_quality_accuracy, fig_m1_quality_probs,
+          ncol = 3, nrow=1, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = "AUTO")
+
+fig_classificationbyquality
 
 
-
-## Sensor comparisons
+# FIGURE 5: Sensor comparisons -----
+# Prepare table and stats
 sensor_table <- table(EN_test_results$Sensor, EN_test_results$Correct)
 
 fisher_result <- fisher.test(sensor_table)
 fisher_result
 
-# FIGURE 8: Accuracy Rate by Sensor
+# FIGURE 5A: Accuracy Rate by Sensor
 fig_sensor_accuracy <- EN_test_results %>%
   group_by(Sensor) %>%
   summarise(
@@ -812,10 +810,8 @@ fig_sensor_accuracy <- EN_test_results %>%
   theme(legend.position = "none")  +
   geom_hline(yintercept=.5, linewidth=myaxislinewidth, linetype='dashed', color='black')
 
-fig_sensor_accuracy
 
-
-# FIGURE 9: Sensor Accuracy Count Matrix
+# FIGURE 5B: Sensor Accuracy Count Matrix
 sensor_df <- as.data.frame(sensor_table) # Convert to data frame
 colnames(sensor_df) <- c("Sensor", "Correct", "Count") # Rename columns
 
@@ -826,37 +822,15 @@ fig_sensor_accuracytable <- ggplot(sensor_df, aes(x = Correct, y = Sensor, fill 
   scale_fill_gradient(low = colors_signal_N, high = colors_signal_Y) +
   scale_x_discrete(labels = c('Incorrect','Correct')) +
   labs(title = "Signal Classification Accuracy Count Matrix",
-    x = "Classification",
-    y = "Sensor"
+       x = "Classification",
+       y = "Sensor"
   ) +
   mytheme_legend + 
   theme(
     panel.grid = element_blank(),
     legend.position = "right")
 
-fig_sensor_accuracytable
-
-
-# FIGURE 10: Accuracy Rate by Sensor and Signal Quality
-fig_sensor_accuracy_signalquality <- EN_test_results %>%
-  group_by(Sensor, SignalQuality, SensorSignalQuality) %>%
-  summarise(Accuracy = mean(Correct), .groups = "drop") %>%
-  ggplot(aes(x = SignalQuality, y = Accuracy, fill = SensorSignalQuality)) +
-  geom_col(position = position_dodge(width = mydodgewidth), linewidth = mycollinewidth, width=mycolwidth, show.legend=TRUE) +
-  scale_fill_manual(values = colors_sensorsignalquality, breaks = c("GCaMP6f_3", "GRABDA2H_3", "dLight1.3b_3"), labels = c("GCaMP6f", "GRABDA2H", "dLight1.3b"),
-  name = "Sensor")+
-  labs(title = "Signal Classification Accuracy by Signal Quality",
-       y = "Accuracy", x = "Signal Quality") +
-  scale_y_continuous(expand=c(0,0),labels = scales::percent_format()) +
-  mytheme_legend+
-  geom_hline(yintercept=.5, linewidth=myaxislinewidth, linetype='dashed', color='black')
-
-fig_sensor_accuracy_signalquality
-
-
-
-# FIGURE 11: Model Confidence (Predicted Probability) by Sensor
-
+# FIGURE 5C: Model Confidence (Predicted Probability) by Sensor
 fig_sensor_probs <- EN_test_results %>%
   ggplot(aes(x = Sensor, y = Prob_Y, fill = Signal)) +
   geom_boxplot(alpha = 1, outlier.shape = 21, outlier.size = 2) +
@@ -868,6 +842,38 @@ fig_sensor_probs <- EN_test_results %>%
   mytheme_legend +
   theme(legend.position = "right")
 
-fig_sensor_probs
+
+# FIGURE 5D: Accuracy Rate by Sensor and Signal Quality
+fig_sensor_accuracy_signalquality <- EN_test_results %>%
+  group_by(Sensor, SignalQuality, SensorSignalQuality) %>%
+  summarise(Accuracy = mean(Correct), .groups = "drop") %>%
+  ggplot(aes(x = SignalQuality, y = Accuracy, fill = SensorSignalQuality)) +
+  geom_col(position = position_dodge(width = mydodgewidth), linewidth = mycollinewidth, width=mycolwidth, show.legend=TRUE) +
+  scale_fill_manual(values = colors_sensorsignalquality, breaks = c("GCaMP6f_3", "GRABDA2H_3", "dLight1.3b_3"), labels = c("GCaMP6f", "GRABDA2H", "dLight1.3b"),
+                    name = "Sensor")+
+  labs(title = "Signal Classification Accuracy by Signal Quality",
+       y = "Accuracy", x = "Signal Quality") +
+  scale_y_continuous(expand=c(0,0),labels = scales::percent_format()) +
+  mytheme_legend+
+  geom_hline(yintercept=.5, linewidth=myaxislinewidth, linetype='dashed', color='black')
 
 
+# Panels
+fig_sensorcomparison <- plot_grid(fig_sensor_accuracy, fig_sensor_accuracytable,
+          fig_sensor_probs, fig_sensor_accuracy_signalquality,
+          ncol = 2, nrow=2, align = "hv",
+          axis  = "tblr", hjust=-.5, labels = c('A','B','C','D'))
+
+fig_sensorcomparison
+
+
+# OUTPUT MODEL -----
+# Save the trained model bundle (weights, lambda, features) to an .rds file
+modelfilepath <- paste(rootgithubpath,'FPSignalCharacterizationAutomation/Model Output/FPSignalCharachterizationAutomation_ElasticNetModel.rds',sep='')
+
+saveFPmodel(
+  model = EN_finalmodel,
+  filepath = modelfilepath,
+  feature_names = includevariables,
+  lambda_val = EN_minlambda
+)
