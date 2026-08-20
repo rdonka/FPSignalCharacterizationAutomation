@@ -30,9 +30,9 @@ In vivo fiber photometry requires surgical preparation to express the fluorescen
 
 Typically, fiber photometry users subjectively decide if a recording has "signal" by visually inspecting the live or recorded sensor-dependent and control streams. The decision is straight forward in cases where signal is clearly present or not present:
 
-![Clear example of DA Signal, dLight1.3b](Example Traces\Intro_Signal.png){height=50% fig-align="center"}
+![Clear example of DA Signal, dLight1.3b](Example Traces\Intro_Signal.png){width=6in fig-align="center"}
 
-![Clear example of no DA Signal, dLight1.3b](Example Traces\Intro_NoSignal.png){height=50% fig-align="center"}
+![Clear example of no DA Signal, dLight1.3b](Example Traces\Intro_NoSignal.png){width=6in fig-align="center"}
 However, the decision is more difficult in cases of ambiguous or low to mid quality signal:
 
 ![Low quality DA Signal, dLight1.3b](Example Traces\Intro_NoSignal.png){height=50% fig-align="center"}
@@ -224,13 +224,13 @@ modeldata <- data_wide %>% select(all_of(IDvariables), all_of(includevariables))
 
 
 
-![No Signal - Quality = 0](Example Traces\SignalN_Quality0_dLight.png){height=50% fig-align="center"}
+![No Signal - Quality = 0](Example Traces\SignalN_Quality0_dLight.png){width=6in fig-align="center"}
 
-![No Signal - Quality = 1](Example Traces\SignalN_Quality1_dLight.png){height=50% fig-align="center"}
+![No Signal - Quality = 1](Example Traces\SignalN_Quality1_dLight.png){width=6in fig-align="center"}
 
-![Signal - Quality = 2](Example Traces\SignalY_Quality2_dLight.png){height=50% fig-align="center"}
+![Signal - Quality = 2](Example Traces\SignalY_Quality2_dLight.png){width=6in fig-align="center"}
 
-![Signal - Quality = 3](Example Traces\SignalY_Quality3_dLight.png){height=50% fig-align="center"}
+![Signal - Quality = 3](Example Traces\SignalY_Quality3_dLight.png){width=6in fig-align="center"}
 
 ## Descriptive Statistics
 
@@ -1049,5 +1049,20 @@ plot_grid(fig_sensor_probs, fig_sensor_accuracy_signalquality,
 
 Overall, the optimized elastic net model described here provided a highly robust and reliable classifer to categorize fiber photometry recordings as 'No Signal' or 'Signal' across DA sensors based on extracted parameters. The model demonstrated that frequency spectrum magnitude ratios between raw signal and scaled background streams were the most critical indicators of recordings with real biological signal, while the raw RMS ratios were the strongest predictors of recordings lacking biological signal. The model achieved high global accuracy of 89.9%, and post hoc analyses revealed the highest degree of performance in the classification of high quality 'Signal' recordings. The model displayed similar accurcy across DA sensors, allowing for robust classification irregardless of differences in sensor properties and kinetics.
 
+
+## Discussion Points
+
+Overall, the model provides a consistent method by which to determine inclusion and exclusion of experimental subjects. To effectively apply this in the lab, I reccomend we adopt a lab wide agreement on procedures and standardize across experimenters to ensure consistency.
+
+- **Threshold for Inclusion:** While the model was initially tested with a 0.5 threshold (> 0.5 = Signal, < 0.5 = No Signal), it may be optimal to alter the threshold to prioritize the minimization of the false positive rate (rating recordings as 'Signal' incorrectly). A higher threshold may result in greater exclusion numbers but could be more conservative and better able to maintain a standard of high quality data.
+
+- **Testing Timepoints:** Typically sensor expression stablizes ~4 weeks post surgery. Signal checks may be performed as often as 2 weeks post-surgery, but as expression increases the signal can markedly change. It would be best to adopt a consistent lab-wide policy for the delay from surgery to signal checking / experiment initation to further optimize inclusion criteria.
+
+- **Application to Existing Datasets:** For existing data sets, the model could be applied to determine which subjects to entirely exclude, or if a subject loses signal across the course of treatment. However, in this case it is critical for the lab to decide on an a-priori threshold before testing the individual subjects, as excluding data that has already been collected and analyzed is ethically complicated. If we want to test this out, I propose that we would be best off starting with a data set where there are known subjects that appear to have low quality or lost signal, hand scoring all of the recordings, and then testing the model to determine the accuracy.
+
+## Conclusion
+
 Ultimately, this pipeline offers a scalable unbiased alternative to manual visual scoring, and may be used to objectively determine inclusion and exclusion criteria of subjects in experimental data sets, offering a method by which to standardize data quality control procedures and mitigate between experimenter variability in subjective assessments of biological signal presence and quality.
+
+
 
