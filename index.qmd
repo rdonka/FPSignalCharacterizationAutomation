@@ -212,7 +212,6 @@ modeldata <- data_wide %>% select(all_of(IDvariables), all_of(includevariables))
 
 ## Representative Traces of Classified Recordings and Quality Ratings
 
-::: {layout-ncol=2}
 ![No Signal - Quality = 0](Example Traces\SignalN_Quality0_dLight.png){height=200% fig-align="center"}
 
 ![No Signal - Quality = 1](Example Traces\SignalN_Quality1_dLight.png){height=200% fig-align="center"}
@@ -220,7 +219,6 @@ modeldata <- data_wide %>% select(all_of(IDvariables), all_of(includevariables))
 ![Signal - Quality = 2](Example Traces\SignalY_Quality2_dLight.png){height=200% fig-align="center"}
 
 ![Signal - Quality = 3](Example Traces\SignalY_Quality3_dLight.png){height=200% fig-align="center"}
-:::
 
 ## Descriptive Statistics
 
