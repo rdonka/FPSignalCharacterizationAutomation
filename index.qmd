@@ -229,6 +229,8 @@ modeldata <- data_wide %>% select(all_of(IDvariables), all_of(includevariables))
 
 ![No Signal - Quality = 1](Example Traces\SignalN_Quality1_dLight.png){width=5in fig-align="center"}
 
+
+
 ![Signal - Quality = 2](Example Traces\SignalY_Quality2_dLight.png){width=5in fig-align="center"}
 
 ![Signal - Quality = 3](Example Traces\SignalY_Quality3_dLight.png){width=5in fig-align="center"}
