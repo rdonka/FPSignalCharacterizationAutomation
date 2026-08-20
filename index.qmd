@@ -28,7 +28,17 @@ Fiber photometry is a relatively new technique to record in vivo neural activity
 
 In vivo fiber photometry requires surgical preparation to express the fluorescent sensor via injection of a viral vector construct (e.g., GRABDA2h or dLight1.3b) and the implantation of a fiber optic cannula. Surgical success rates vary, as numerous factors affect the ultimate quality of the in vivo signal. Surgical technique is critical to ensure injection success (infusion, placement) and correct placement of the fiber optic implant. Failure of the injector, damage to the fiber optic implant, or off-target implantation can result in lack of signal during in vivo fiber photometry recordings. Additional factors including by not limited to post-operative inflammation, blood flow artifact, and sensor expression can also affect the quality of the signal.
 
-Prior to experimentation, it is critical to include subjects with high quality signal and exclude those with low-quality or no signal to maintain the quality and validity of experimental data sets. Identifying if individual subjects display sufficient signal for experimental manipulations is critical to maintaining the quality of experimental data sets for many reasons:
+Typically, fiber photometry users subjectively decide if a recording has "signal" by visually inspecting the live or recorded sensor-dependent and control streams. The decision is straight forward in cases where signal is clearly present or not present:
+
+![Clear example of DA Signal, dLight1.3b](Example Traces\Intro_Signal.png){height=50% fig-align="center"}
+
+![Clear example of no DA Signal, dLight1.3b](Example Traces\Intro_NoSignal.png){height=50% fig-align="center"}
+However, the decision is more difficult in cases of ambiguous or low to mid quality signal:
+
+![Low quality DA Signal, dLight1.3b](Example Traces\Intro_NoSignal.png){height=50% fig-align="center"}
+
+
+In these cases, determination of inclusion can be difficult. The decision of "signal" or "no signal" may vary both within and between experimenters, resulting in inconsistent signal quality across experiments. Prior to experimentation, it is critical to include subjects with high quality signal and exclude those with low-quality or no signal to maintain the quality and validity of experimental data sets. Identifying if individual subjects display sufficient signal for experimental manipulations is critical to maintaining the quality of experimental data sets for many reasons:
 
 - **Noise:** Including subjects with poor quality signal can add noise to the ultimate experimental conclusion, obscuring valid scientific conclusions or potentially resulting in incorrect interpretations (opposite effect, null findings, etc)
 
@@ -214,13 +224,13 @@ modeldata <- data_wide %>% select(all_of(IDvariables), all_of(includevariables))
 
 
 
-![No Signal - Quality = 0](Example Traces\SignalN_Quality0_dLight.png){height=100% fig-align="center"}
+![No Signal - Quality = 0](Example Traces\SignalN_Quality0_dLight.png){height=50% fig-align="center"}
 
-![No Signal - Quality = 1](Example Traces\SignalN_Quality1_dLight.png){height=100% fig-align="center"}
+![No Signal - Quality = 1](Example Traces\SignalN_Quality1_dLight.png){height=50% fig-align="center"}
 
-![Signal - Quality = 2](Example Traces\SignalY_Quality2_dLight.png){height=100% fig-align="center"}
+![Signal - Quality = 2](Example Traces\SignalY_Quality2_dLight.png){height=50% fig-align="center"}
 
-![Signal - Quality = 3](Example Traces\SignalY_Quality3_dLight.png){height=100% fig-align="center"}
+![Signal - Quality = 3](Example Traces\SignalY_Quality3_dLight.png){height=50% fig-align="center"}
 
 ## Descriptive Statistics
 

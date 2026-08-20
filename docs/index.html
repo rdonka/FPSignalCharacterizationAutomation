@@ -222,7 +222,21 @@ window.Quarto = {
 <h1>Introduction</h1>
 <p>Fiber photometry is a relatively new technique to record in vivo neural activity through the use of biosensors. Biosensors fluoresce in response to ligand binding, providing users a method by which to assay changes in activity via the collection of relative changes in the intensity of collected fluorescence. Numerous sensors exist to assay cell body activity via calcium activity (e.g., GCaMP), or extracellular neurotransmitter release. To record dopamine (DA) activity, common approaches include cell body recording via Cre dependent GCaMP6f in a TH:Cre rat line, or dopamine sensors expressed downstream in regions like the nucleus accumbens (NAc). Two primary families of DA sensors are utilized (GRAB and dLight sensors), which vary with respect to binding affinity, temporal kinetics, and dynamic range. Across all sensors, recordings of cell body or downstream release activity in the NAc can detect both spontaneous and evoked activity reliably.</p>
 <p>In vivo fiber photometry requires surgical preparation to express the fluorescent sensor via injection of a viral vector construct (e.g., GRABDA2h or dLight1.3b) and the implantation of a fiber optic cannula. Surgical success rates vary, as numerous factors affect the ultimate quality of the in vivo signal. Surgical technique is critical to ensure injection success (infusion, placement) and correct placement of the fiber optic implant. Failure of the injector, damage to the fiber optic implant, or off-target implantation can result in lack of signal during in vivo fiber photometry recordings. Additional factors including by not limited to post-operative inflammation, blood flow artifact, and sensor expression can also affect the quality of the signal.</p>
-<p>Prior to experimentation, it is critical to include subjects with high quality signal and exclude those with low-quality or no signal to maintain the quality and validity of experimental data sets. Identifying if individual subjects display sufficient signal for experimental manipulations is critical to maintaining the quality of experimental data sets for many reasons:</p>
+<p>Typically, fiber photometry users subjectively decide if a recording has “signal” by visually inspecting the live or recorded sensor-dependent and control streams. The decision is straight forward in cases where signal is clearly present or not present:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Example Traces\Intro_Signal.png" style="height:50.0%" class="figure-img"></p>
+<figcaption>Clear example of DA Signal, dLight1.3b</figcaption>
+</figure>
+</div>
+<p><img src="Example Traces\Intro_NoSignal.png" class="quarto-figure quarto-figure-center" style="height:50.0%" alt="Clear example of no DA Signal, dLight1.3b"> However, the decision is more difficult in cases of ambiguous or low to mid quality signal:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Example Traces\Intro_NoSignal.png" style="height:50.0%" class="figure-img"></p>
+<figcaption>Low quality DA Signal, dLight1.3b</figcaption>
+</figure>
+</div>
+<p>In these cases, determination of inclusion can be difficult. The decision of “signal” or “no signal” may vary both within and between experimenters, resulting in inconsistent signal quality across experiments. Prior to experimentation, it is critical to include subjects with high quality signal and exclude those with low-quality or no signal to maintain the quality and validity of experimental data sets. Identifying if individual subjects display sufficient signal for experimental manipulations is critical to maintaining the quality of experimental data sets for many reasons:</p>
 <ul>
 <li><p><strong>Noise:</strong> Including subjects with poor quality signal can add noise to the ultimate experimental conclusion, obscuring valid scientific conclusions or potentially resulting in incorrect interpretations (opposite effect, null findings, etc)</p></li>
 <li><p><strong>Long term validity:</strong> Photobleaching occurs across repeated recordings in all subjects, which decreases the overall strength of the fluorescent signal intensity. In subjects with poor quality signal at the start of the experiment, photobleaching can entirely eliminate the signal by the end of the experimental paradigm</p></li>
@@ -398,25 +412,25 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="representative-traces-of-classified-recordings-and-quality-ratings">Representative Traces of Classified Recordings and Quality Ratings</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="Example Traces\SignalN_Quality0_dLight.png" style="height:100.0%" class="figure-img"></p>
+<p><img src="Example Traces\SignalN_Quality0_dLight.png" style="height:50.0%" class="figure-img"></p>
 <figcaption>No Signal - Quality = 0</figcaption>
 </figure>
 </div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="Example Traces\SignalN_Quality1_dLight.png" style="height:100.0%" class="figure-img"></p>
+<p><img src="Example Traces\SignalN_Quality1_dLight.png" style="height:50.0%" class="figure-img"></p>
 <figcaption>No Signal - Quality = 1</figcaption>
 </figure>
 </div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="Example Traces\SignalY_Quality2_dLight.png" style="height:100.0%" class="figure-img"></p>
+<p><img src="Example Traces\SignalY_Quality2_dLight.png" style="height:50.0%" class="figure-img"></p>
 <figcaption>Signal - Quality = 2</figcaption>
 </figure>
 </div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="Example Traces\SignalY_Quality3_dLight.png" style="height:100.0%" class="figure-img"></p>
+<p><img src="Example Traces\SignalY_Quality3_dLight.png" style="height:50.0%" class="figure-img"></p>
 <figcaption>Signal - Quality = 3</figcaption>
 </figure>
 </div>
