@@ -30,10 +30,15 @@ In vivo fiber photometry requires surgical preparation to express the fluorescen
 
 Typically, fiber photometry users subjectively decide if a recording has "signal" by visually inspecting the live or recorded sensor-dependent and control streams. The decision is straight forward in cases where signal is clearly present or not present:
 
+
+**Signal:**
+
 ![Clear example of DA Signal, dLight1.3b](Example Traces\Intro_Signal.png){width=8in fig-align="center"}
+**No Signal:**
 
 ![Clear example of no DA Signal, dLight1.3b](Example Traces\Intro_NoSignal.png){width=8in fig-align="center"}
 However, the decision is more difficult in cases of ambiguous or low to mid quality signal:
+
 
 ![Low quality DA Signal, dLight1.3b](Example Traces\Intro_NoSignal.png){width=8in fig-align="center"}
 
@@ -222,14 +227,19 @@ modeldata <- data_wide %>% select(all_of(IDvariables), all_of(includevariables))
 
 ## Representative Traces of Classified Recordings and Quality Ratings
 
+**Example recordings with no signal:**
+
 ::: {layout-ncol=2}
 
 
 ![No Signal - Quality = 0](Example Traces\SignalN_Quality0_dLight.png){width=5in fig-align="center"}
 
 ![No Signal - Quality = 1](Example Traces\SignalN_Quality1_dLight.png){width=5in fig-align="center"}
+:::
 
+**Example recordings with signal:**
 
+::: {layout-ncol=2}
 
 ![Signal - Quality = 2](Example Traces\SignalY_Quality2_dLight.png){width=5in fig-align="center"}
 

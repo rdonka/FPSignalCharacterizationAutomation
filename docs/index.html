@@ -227,12 +227,8 @@ window.Quarto = {
 <p>Fiber photometry is a relatively new technique to record in vivo neural activity through the use of biosensors. Biosensors fluoresce in response to ligand binding, providing users a method by which to assay changes in activity via the collection of relative changes in the intensity of collected fluorescence. Numerous sensors exist to assay cell body activity via calcium activity (e.g., GCaMP), or extracellular neurotransmitter release. To record dopamine (DA) activity, common approaches include cell body recording via Cre dependent GCaMP6f in a TH:Cre rat line, or dopamine sensors expressed downstream in regions like the nucleus accumbens (NAc). Two primary families of DA sensors are utilized (GRAB and dLight sensors), which vary with respect to binding affinity, temporal kinetics, and dynamic range. Across all sensors, recordings of cell body or downstream release activity in the NAc can detect both spontaneous and evoked activity reliably.</p>
 <p>In vivo fiber photometry requires surgical preparation to express the fluorescent sensor via injection of a viral vector construct (e.g., GRABDA2h or dLight1.3b) and the implantation of a fiber optic cannula. Surgical success rates vary, as numerous factors affect the ultimate quality of the in vivo signal. Surgical technique is critical to ensure injection success (infusion, placement) and correct placement of the fiber optic implant. Failure of the injector, damage to the fiber optic implant, or off-target implantation can result in lack of signal during in vivo fiber photometry recordings. Additional factors including by not limited to post-operative inflammation, blood flow artifact, and sensor expression can also affect the quality of the signal.</p>
 <p>Typically, fiber photometry users subjectively decide if a recording has “signal” by visually inspecting the live or recorded sensor-dependent and control streams. The decision is straight forward in cases where signal is clearly present or not present:</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="Example Traces\Intro_Signal.png" class="img-fluid figure-img" style="width:8in"></p>
-<figcaption>Clear example of DA Signal, dLight1.3b</figcaption>
-</figure>
-</div>
+<p><strong>Signal:</strong></p>
+<p><img src="Example Traces\Intro_Signal.png" class="img-fluid quarto-figure quarto-figure-center" style="width:8in" alt="Clear example of DA Signal, dLight1.3b"> <strong>No Signal:</strong></p>
 <p><img src="Example Traces\Intro_NoSignal.png" class="img-fluid quarto-figure quarto-figure-center" style="width:8in" alt="Clear example of no DA Signal, dLight1.3b"> However, the decision is more difficult in cases of ambiguous or low to mid quality signal:</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -414,6 +410,7 @@ window.Quarto = {
 <h1>Results</h1>
 <section id="representative-traces-of-classified-recordings-and-quality-ratings" class="level2">
 <h2 class="anchored" data-anchor-id="representative-traces-of-classified-recordings-and-quality-ratings">Representative Traces of Classified Recordings and Quality Ratings</h2>
+<p><strong>Example recordings with no signal:</strong></p>
 <div class="quarto-layout-panel" data-layout-ncol="2">
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
@@ -433,6 +430,9 @@ window.Quarto = {
 </div>
 </div>
 </div>
+</div>
+<p><strong>Example recordings with signal:</strong></p>
+<div class="quarto-layout-panel" data-layout-ncol="2">
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
