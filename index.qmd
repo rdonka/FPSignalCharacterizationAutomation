@@ -55,7 +55,8 @@ Thus, classifying subjects for inclusion in fiber photometry experiments prior t
 
 Over the course of experimental protocols, inevitably cases will occur where signal is lost in individual subjects due to a multitude of reasons including photobleaching, inflammation, issues with headcap viability, and duration of protocol. Additionally, individual sessions may fail to record viable signal due to issues with the patch cord, connection between the patchcord and fiber optic ferrule, or animal behavior resulting in degradation of the connection. In these circumstances, identifying an objective inclusion/exclusion criterion to apply to filter session recordings for inclusion is particularly critical.
 
-The overall goal of this project was to create a model capable of automatically classifying in vivo fiber photometry recordings of dopamine activity as having signal or no signal, and provide a binary inclusion/exclusion decision. To do so, I first hand scored in vivo fiber photometry recordings from subjects with a variety of DA sensors (VTA GCaMP6f, NAc GRABDA2H, NAc dLight1.3b) as having signal or no signal, and scored the quality of the signal from 0 to 3. For each recording, numerous variables were quantified to charachterize the signal including descriptive statistics (mean, range), frequency domain magnitudes, and ratios between sensor-dependent and control streams. The dataset was split into training and testing data sets, and an elastic net model was trained and tested for accuracy compared to hand-scored classifications. Signal quality ratings were used to evaluate model accuracy and elucidate model classification errors. 
+The overall goal of this project was to create a model capable of automatically classifying in vivo fiber photometry recordings of dopamine activity as having signal or no signal, and provide a binary inclusion/exclusion decision. To do so, I first hand scored in vivo fiber photometry recordings from subjects with a variety of DA sensors (VTA GCaMP6f, NAc GRABDA2H, NAc dLight1.3b) as having signal or no signal, and scored the quality of the signal from 0 to 3. For each recording, numerous variables were quantified to charachterize the signal including descriptive statistics (mean, range), frequency domain magnitudes, and ratios between sensor-dependent and control streams. The dataset was split into training and testing data sets, and an elastic net model was trained and tested for accuracy compared to hand-scored classifications. Signal quality ratings were used to evaluate model accuracy and elucidate model classification errors.
+
 
 Elastic net was chosen as the optimal approach for several reasons:
 
@@ -67,6 +68,9 @@ Elastic net was chosen as the optimal approach for several reasons:
 
 - **Customizable Decision Thresholds:** The model outputs predicted probabilities which can be converted to discrete classifications. Classification thresholds can be tuned to prioritize sensitivity (minimizes false negatives) or specificity (minimizes false positives) depending on goals.
 
+
+![Elastic Net Model Explanation](Example Traces\ElasticNet_Diagram.png){width=8in fig-align="center"}
+![Elastic Net Combines Lasso and Ridge Approaches](Example Traces\ModelTypes.png){width=8in fig-align="center"}
 
 Here we present the results of an elastic net model to automatically classify in vivo dopamine fiber photometry recordings as displaying signal or no signal. Overall, the model was highly accurate and produced consistent accurate classification of recordings based on extracted features of the signal-dependent, background, and processed data streams.
 
@@ -86,7 +90,7 @@ Fiber photometry recordings were conducted a minimum of three weeks post-surgery
 
 ### Signal Classification
 
-Fiber photometry recordings were hand scored as having 'Signal' or 'No Signal' based on prior experience and subjective evaluation. Recordings were also assigned a quality score from 0 to 4, with 0 meaning no signal, 1 meaning low quality signal that should be classified as no signal, 2 meaning moderate signal of sufficient quality to be scored as having signal, and 3 meaning high quality signal.
+Fiber photometry recordings were hand scored as having 'Signal' or 'No Signal' based on prior experience and subjective evaluation. Recordings were also assigned a quality score from 0 to 3, with 0 meaning no signal, 1 meaning low quality signal that should be classified as no signal, 2 meaning moderate signal of sufficient quality to be scored as having signal, and 3 meaning high quality signal.
 
 Each recording was scored two times independently, and discrepancies were reconciled based on the signal quality ratings assigned in both scores.
 
@@ -244,6 +248,17 @@ modeldata <- data_wide %>% select(all_of(IDvariables), all_of(includevariables))
 ![Signal - Quality = 2](Example Traces\SignalY_Quality2_dLight.png){width=5in fig-align="center"}
 
 ![Signal - Quality = 3](Example Traces\SignalY_Quality3_dLight.png){width=5in fig-align="center"}
+:::
+
+
+## Representative FFTs of Classified Recordings and Quality Ratings
+
+::: {layout-ncol=2}
+
+
+![No Signal - Quality = 0](Example Traces\SignalN_Quality0_dLight_FFT.png){width=5in fig-align="center"}
+
+![Signal - Quality = 3](Example Traces\SignalY_Quality3_dLight_FFT.png){width=5in fig-align="center"}
 :::
 
 

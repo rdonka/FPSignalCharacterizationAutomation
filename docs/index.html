@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Rachel M. Donka">
-<meta name="dcterms.date" content="2026-08-20">
+<meta name="dcterms.date" content="2026-08-21">
 
 <title>Fiber Photometry Signal Characterization Automation – Fiber Photometry Dopamine Signal Characterization</title>
 <style>
@@ -164,6 +164,7 @@ window.Quarto = {
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
   <ul class="collapse">
   <li><a href="#representative-traces-of-classified-recordings-and-quality-ratings" id="toc-representative-traces-of-classified-recordings-and-quality-ratings" class="nav-link" data-scroll-target="#representative-traces-of-classified-recordings-and-quality-ratings">Representative Traces of Classified Recordings and Quality Ratings</a></li>
+  <li><a href="#representative-ffts-of-classified-recordings-and-quality-ratings" id="toc-representative-ffts-of-classified-recordings-and-quality-ratings" class="nav-link" data-scroll-target="#representative-ffts-of-classified-recordings-and-quality-ratings">Representative FFTs of Classified Recordings and Quality Ratings</a></li>
   <li><a href="#descriptive-statistics" id="toc-descriptive-statistics" class="nav-link" data-scroll-target="#descriptive-statistics">Descriptive Statistics</a></li>
   <li><a href="#model-specification-elastic-net-classification" id="toc-model-specification-elastic-net-classification" class="nav-link" data-scroll-target="#model-specification-elastic-net-classification">Model Specification: Elastic Net Classification</a></li>
   <li><a href="#model-results" id="toc-model-results" class="nav-link" data-scroll-target="#model-results">Model Results</a>
@@ -205,7 +206,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 20, 2026</p>
+      <p class="date">August 21, 2026</p>
     </div>
   </div>
   
@@ -252,6 +253,7 @@ window.Quarto = {
 <li><p><strong>Sparsity:</strong> Redundant or uninformative metrics are automatically set to zero, extracting a concise set of features that contribute to accurate classification.</p></li>
 <li><p><strong>Customizable Decision Thresholds:</strong> The model outputs predicted probabilities which can be converted to discrete classifications. Classification thresholds can be tuned to prioritize sensitivity (minimizes false negatives) or specificity (minimizes false positives) depending on goals.</p></li>
 </ul>
+<p><img src="Example Traces\ElasticNet_Diagram.png" class="img-fluid quarto-figure quarto-figure-center" style="width:8in" alt="Elastic Net Model Explanation"> <img src="Example Traces\ModelTypes.png" class="img-fluid quarto-figure quarto-figure-center" style="width:8in" alt="Elastic Net Combines Lasso and Ridge Approaches"></p>
 <p>Here we present the results of an elastic net model to automatically classify in vivo dopamine fiber photometry recordings as displaying signal or no signal. Overall, the model was highly accurate and produced consistent accurate classification of recordings based on extracted features of the signal-dependent, background, and processed data streams.</p>
 <section id="methods" class="level2">
 <h2 class="anchored" data-anchor-id="methods">Methods</h2>
@@ -266,7 +268,7 @@ window.Quarto = {
 </section>
 <section id="signal-classification" class="level3">
 <h3 class="anchored" data-anchor-id="signal-classification">Signal Classification</h3>
-<p>Fiber photometry recordings were hand scored as having ‘Signal’ or ‘No Signal’ based on prior experience and subjective evaluation. Recordings were also assigned a quality score from 0 to 4, with 0 meaning no signal, 1 meaning low quality signal that should be classified as no signal, 2 meaning moderate signal of sufficient quality to be scored as having signal, and 3 meaning high quality signal.</p>
+<p>Fiber photometry recordings were hand scored as having ‘Signal’ or ‘No Signal’ based on prior experience and subjective evaluation. Recordings were also assigned a quality score from 0 to 3, with 0 meaning no signal, 1 meaning low quality signal that should be classified as no signal, 2 meaning moderate signal of sufficient quality to be scored as having signal, and 3 meaning high quality signal.</p>
 <p>Each recording was scored two times independently, and discrepancies were reconciled based on the signal quality ratings assigned in both scores.</p>
 </section>
 <section id="signal-processing" class="level3">
@@ -446,6 +448,29 @@ window.Quarto = {
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="Example Traces\SignalY_Quality3_dLight.png" class="img-fluid figure-img" style="width:5in"></p>
+<figcaption>Signal - Quality = 3</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="representative-ffts-of-classified-recordings-and-quality-ratings" class="level2">
+<h2 class="anchored" data-anchor-id="representative-ffts-of-classified-recordings-and-quality-ratings">Representative FFTs of Classified Recordings and Quality Ratings</h2>
+<div class="quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Example Traces\SignalN_Quality0_dLight_FFT.png" class="img-fluid figure-img" style="width:5in"></p>
+<figcaption>No Signal - Quality = 0</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Example Traces\SignalY_Quality3_dLight_FFT.png" class="img-fluid figure-img" style="width:5in"></p>
 <figcaption>Signal - Quality = 3</figcaption>
 </figure>
 </div>
