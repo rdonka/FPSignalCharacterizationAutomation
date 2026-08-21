@@ -107,6 +107,75 @@ Fiber photometry recordings were quantified by a variety of parameters including
 
 Quantified variables were exported to a .csv file and all further analysis was conducted in R.
 
+**Variables:**
+32 variables were included:
+
+- Raw Signal Range
+
+- Raw Signal RMS
+
+- Raw Signal Low Freq FFT Mag
+
+- Raw Signal Medium Freq FFT Mag
+
+- Raw Signal High Freq FFT Mag
+
+- Raw Background Range
+
+- Raw Background RMS
+
+- Raw Background Low Freq FFT Mag
+
+- Raw Background Medium Freq FFT Mag
+
+- Raw Background High Freq FFT Mag
+
+- Scaled Background Range 
+
+- Scaled Background RMS
+
+- Scaled Background Low Freq FFT Mag
+
+- Scaled Background Medium Freq FFT Mag
+
+- Scaled Background High Freq FFT Mag
+
+- Subtracted Signal Range
+
+- Subtracted Signal RMS
+
+- Subtracted Signal Low Freq FFT Mag
+
+- Subtracted Signal Medium Freq FFT Mag
+
+- Subtracted Signal High Freq FFT Mag
+
+- Filtered Signal Range
+
+- Filtered Signal RMS
+
+- Filtered Signal Low Freq FFT Mag
+
+- Filtered Signal Medium Freq FFT Mag
+
+- Raw Signal:Raw Background RMS
+
+- Raw Signal:Raw Background Low Freq FFT Mag
+
+- Raw Signal:Raw Background Medium Freq FFT Mag
+
+- Raw Signal:Raw Background High Freq FFT Mag
+
+- Raw Signal:Scaled Background RMS
+
+- Raw Signal:Scaled Background Low Freq FFT Mag
+
+- Raw Signal:Scaled Background Medium Freq FFT Mag
+
+- Raw Signal:Scaled Background High Freq FFT Mag
+
+
+
 
 ``` {r}
 #| label: environment-prep
