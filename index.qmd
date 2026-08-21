@@ -40,7 +40,7 @@ Typically, fiber photometry users subjectively decide if a recording has "signal
 However, the decision is more difficult in cases of ambiguous or low to mid quality signal:
 
 
-![Low quality DA Signal, dLight1.3b](Example Traces\Intro_NoSignal.png){width=8in fig-align="center"}
+![Low quality DA Signal, dLight1.3b](Example Traces\Intro_LowQualitySignal.png){width=8in fig-align="center"}
 
 
 In these cases, determination of inclusion can be difficult. The decision of "signal" or "no signal" may vary both within and between experimenters, resulting in inconsistent signal quality across experiments. Prior to experimentation, it is critical to include subjects with high quality signal and exclude those with low-quality or no signal to maintain the quality and validity of experimental data sets. Identifying if individual subjects display sufficient signal for experimental manipulations is critical to maintaining the quality of experimental data sets for many reasons:
